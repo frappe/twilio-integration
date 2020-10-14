@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include twilio_integration *.css
+recursive-include twilio_integration *.csv
+recursive-include twilio_integration *.html
+recursive-include twilio_integration *.ico
+recursive-include twilio_integration *.js
+recursive-include twilio_integration *.json
+recursive-include twilio_integration *.md
+recursive-include twilio_integration *.png
+recursive-include twilio_integration *.py
+recursive-include twilio_integration *.svg
+recursive-include twilio_integration *.txt
+recursive-exclude twilio_integration *.pyc
