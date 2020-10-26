@@ -10,13 +10,14 @@ app_icon = "octicon octicon-file-directory"
 app_color = "grey"
 app_email = "developers@frappe.io"
 app_license = "MIT"
+fixtures = ["Custom Field", "Property Setter"]
 
 # Includes in <head>
 # ------------------
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/twilio_integration/css/twilio_integration.css"
-# app_include_js = "/assets/twilio_integration/js/twilio_integration.js"
+app_include_js = "assets/js/twilio-call-handler.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/twilio_integration/css/twilio_integration.css"
@@ -34,6 +35,9 @@ app_license = "MIT"
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
+doctype_js = {
+	"Notification" : "public/js/Notification.js"
+}
 
 # Home Pages
 # ----------
@@ -132,3 +136,6 @@ app_license = "MIT"
 #
 # auto_cancel_exempted_doctypes = ["Auto Repeat"]
 
+override_doctype_class = {
+	"Notification": "twilio_integration.overrides.notification.SendNotification"
+}
