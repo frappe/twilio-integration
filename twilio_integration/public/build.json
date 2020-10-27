@@ -1,0 +1,5 @@
+{
+	"js/twilio-call-handler.js": [
+		"public/js/twilio_call_handler.js"
+	]
+}
