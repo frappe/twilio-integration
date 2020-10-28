@@ -1,0 +1,84 @@
+{
+ "actions": [],
+ "creation": "2020-01-28 15:21:44.457163",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "enabled",
+  "account_sid",
+  "auth_token",
+  "twiml_sid",
+  "column_break_3",
+  "api_key",
+  "api_secret",
+  "default_outgoing_medium"
+ ],
+ "fields": [
+  {
+   "default": "0",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "account_sid",
+   "fieldtype": "Data",
+   "label": "Account SID",
+   "mandatory_depends_on": "eval: doc.enabled"
+  },
+  {
+   "fieldname": "auth_token",
+   "fieldtype": "Password",
+   "label": "Auth Token",
+   "mandatory_depends_on": "eval: doc.enabled"
+  },
+  {
+   "fieldname": "api_key",
+   "fieldtype": "Data",
+   "label": "API Key"
+  },
+  {
+   "fieldname": "api_secret",
+   "fieldtype": "Password",
+   "label": "API Secret"
+  },
+  {
+   "fieldname": "twiml_sid",
+   "fieldtype": "Data",
+   "label": "TwiML SID"
+  },
+  {
+   "fieldname": "default_outgoing_medium",
+   "fieldtype": "Link",
+   "label": "Default Outgoing Medium",
+   "options": "Communication Medium"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2020-10-28 11:05:33.713179",
+ "modified_by": "Administrator",
+ "module": "Twilio Integration",
+ "name": "Twilio Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC"
+}
