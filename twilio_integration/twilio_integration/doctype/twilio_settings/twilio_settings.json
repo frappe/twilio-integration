@@ -12,7 +12,8 @@
   "column_break_3",
   "api_key",
   "api_secret",
-  "default_outgoing_medium"
+  "outgoing_voice_medium",
+  "record_calls"
  ],
  "fields": [
   {
@@ -49,20 +50,26 @@
    "label": "TwiML SID"
   },
   {
-   "fieldname": "default_outgoing_medium",
-   "fieldtype": "Link",
-   "label": "Default Outgoing Medium",
-   "options": "Communication Medium"
-  },
-  {
    "fieldname": "column_break_3",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "record_calls",
+   "fieldtype": "Check",
+   "label": "Record Calls"
+  },
+  {
+   "fieldname": "outgoing_voice_medium",
+   "fieldtype": "Link",
+   "label": "Outgoing Voice Medium",
+   "options": "Communication Medium"
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2020-10-28 11:05:33.713179",
+ "modified": "2020-11-02 22:14:27.011590",
  "modified_by": "Administrator",
  "module": "Twilio Integration",
  "name": "Twilio Settings",

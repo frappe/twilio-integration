@@ -3,7 +3,7 @@
 
 frappe.ui.form.on('Twilio Settings', {
 	onload: function(frm) {
-		frm.set_query('default_outgoing_medium', function() {
+		frm.set_query('outgoing_voice_medium', function() {
 			return {
 				filters: {
 					communication_channel: "Twilio",
