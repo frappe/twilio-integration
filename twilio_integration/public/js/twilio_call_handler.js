@@ -2,22 +2,22 @@ var onload_script = function() {
 	frappe.provide('frappe.phone_call');
 	class TwilioCall {
 		constructor(to_number, frm) {
-			var me = this;
 			frappe.call({
 				method: "twilio_integration.twilio_integration.doctype.twilio_settings.twilio_settings.generate_access_token",
 				callback: (data) => {
-					console.log(data.token);
-					this.setup_device(data.token);
+					frappe.run_serially([
+						() => this.setup_device(data.token),
+						() => this.setup_device_listener(),
+						() => this.get_audio_devices(),
+						() => this.setup_call_info(frm, to_number),
+						() => this.make()
+					]);
 				}
-			}).then(() => {
-				this.setup_device_listener();
-				this.setup_call_info(frm, to_number);
-				this.make();
 			})
 		}
 
 		make() {
-			me.dialog = new frappe.ui.Dialog({
+			this.dialog = new frappe.ui.Dialog({
 				'static': 1,
 				'title': __('Make a Call'),
 				'minimizable': true,
@@ -39,61 +39,65 @@ var onload_script = function() {
 					'reqd': 1
 				}],
 				primary_action: () => {
-					me.dialog.disable_primary_action();
+					this.dialog.disable_primary_action();
 					var params = {
 						debug: true,
-						To: me.dialog.get_value('to_number')
+						To: this.dialog.get_value('to_number')
 					};
 
 					if (this.device) {
+						let me = this;
 						var outgoingConnection = this.device.connect(params);
-						console.log(outgoingConnection)
 						outgoingConnection.on("ringing", function () {
-							set_header('ringing');
+							me.set_header('ringing');
 						});
 					} else {
-						me.dialog.enable_primary_action();
+						this.dialog.enable_primary_action();
 					}
 				},
-				primary_action_label: __('Call')
+				primary_action_label: __('Call'),
+				secondary_action: () => {
+					if (this.device) {
+						this.device.disconnectAll();
+						this.device.destroy();
+					}
+				}
 			});
-			me.dialog.show();
-			me.dialog.get_close_btn().show();
+			this.dialog.show();
+			this.dialog.get_close_btn().show();
 		}
 
 		setup_device_listener() {
-			this.device.on("ready", function (device) {
-				set_header('available');
+			var me = this;
+			me.device.on("ready", function (device) {
+				me.set_header('available');
 			});
 
-			this.device.on("error", function (error) {
-				set_header("failed");
-				frappe.throw(__("Twilio.Device Error: " + error.message));
+			me.device.on("error", function (error) {
+				me.set_header("failed");
+				this.device.disconnectAll();
+				frappe.throw(__("Twilio Device Error: " + error.message));
 			});
 
-			this.device.on("disconnect", function (conn) {
+			me.device.on("disconnect", function (conn) {
+				me.dialog.set_secondary_action_label("Close")
 				me.dialog.enable_primary_action();
-				this.set_call_as_complete();
+				me.set_call_as_complete();
 				window.onbeforeunload = null;
-				frappe.call({
-					"method": "twilio_integration.twilio_integration.doctype.twilio_settings.twilio_settings.update_call_log",
-					"args": {
-						"call_sid": this.call_sid,
-						"status": "Completed"
-					}
-				})
-				set_header("completed");
+				me.set_header("available");
+				me.update_call_log(conn)
 			});
 
-			this.device.on("connect", function (conn) {
-				set_header("in-progress");
+			me.device.on("connect", function (conn) {
+				me.dialog.set_secondary_action_label("Hang Up")
+				me.set_header("in-progress");
 				window.onbeforeunload = function() {
 					return "you can not refresh the page";
 				}
 			});
 
-			this.device.on("incoming", function (conn) {
-				log("Incoming connection from " + conn.parameters.From);
+			me.device.on("incoming", function (conn) {
+				console.log("Incoming connection from " + conn.parameters.From);
 				var archEnemyPhoneNumber = "+12093373517";
 		
 				if (conn.parameters.From === archEnemyPhoneNumber) {
@@ -142,14 +146,14 @@ var onload_script = function() {
 		}
 
 		set_call_as_complete() {
-			me.dialog.get_close_btn().show();
+			this.dialog.get_close_btn().show();
 			clearInterval(this.updater);
 		}
 
 		set_header(status) {
-			me.dialog.set_title(frappe.model.unscrub(status));
+			this.dialog.set_title(frappe.model.unscrub(status));
 			const indicator_class = this.get_status_indicator(status);
-			me.dialog.header.find('.indicator').attr('class', `indicator ${indicator_class}`);
+			this.dialog.header.find('.indicator').attr('class', `indicator ${indicator_class}`);
 		}
 
 		get_status_indicator(status) {
@@ -168,12 +172,23 @@ var onload_script = function() {
 		}
 
 		get_audio_devices() {
-			let selected_devices = [];
+			let me = this;
+			me.output_devices = [];
 
 			this.device.audio.availableOutputDevices.forEach(function (device, id) {
-				selected_devices.push(device.label);
+				me.output_devices.push(device.label);
 			});
-			return selected_devices;
+		}
+
+		update_call_log(conn, status="Completed") {
+			if (!conn.parameters.CallSid) return
+			frappe.call({
+				"method": "twilio_integration.twilio_integration.doctype.twilio_settings.twilio_settings.update_call_log",
+				"args": {
+					"call_sid": conn.parameters.CallSid,
+					"status": status
+				}
+			})
 		}
 	}
 
