@@ -8,7 +8,6 @@ var onload_script = function() {
 					frappe.run_serially([
 						() => this.setup_device(data.token),
 						() => this.setup_device_listener(),
-						() => this.get_audio_devices(),
 						() => this.setup_call_info(frm, to_number),
 						() => this.make()
 					]);
@@ -27,14 +26,6 @@ var onload_script = function() {
 					'fieldtype': 'Autocomplete',
 					'ignore_validation': true,
 					'options': this.to_numbers,
-					'read_only': 0,
-					'reqd': 1
-				}, {
-					'fieldname': 'select_audio',
-					'label': 'Active Audio Output',
-					'fieldtype': 'Select',
-					'ignore_validation': true,
-					'options': ["Default - Internal Speakers (Built-in)", "Internal Speakers (Built-in)", "krisp speaker (Virtual)"],
 					'read_only': 0,
 					'reqd': 1
 				}],
@@ -169,15 +160,6 @@ var onload_script = function() {
 			};
 			const indicator_class = `indicator ${indicator_map[status] || 'blue blink'}`;
 			return indicator_class;
-		}
-
-		get_audio_devices() {
-			let me = this;
-			me.output_devices = [];
-
-			this.device.audio.availableOutputDevices.forEach(function (device, id) {
-				me.output_devices.push(device.label);
-			});
 		}
 
 		update_call_log(conn, status="Completed") {
