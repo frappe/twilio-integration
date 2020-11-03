@@ -164,6 +164,8 @@ def create_call_log(call_payload):
 def update_call_log(call_sid, status="In Progress"):
 	# update the call log status
 
+	if not frappe.db.exists("Call Log", call_sid): return
+
 	call_details = get_call_info(call_sid)
 	call_log = frappe.get_doc("Call Log", call_sid)
 	call_log.status = status
