@@ -32,7 +32,6 @@ var onload_script = function() {
 				primary_action: () => {
 					this.dialog.disable_primary_action();
 					var params = {
-						debug: true,
 						To: this.dialog.get_value('to_number')
 					};
 
@@ -107,9 +106,7 @@ var onload_script = function() {
 				codecPreferences: ["opus", "pcmu"],
 				fakeLocalDTMF: true,
 				enableRingingState: true,
-				debug: true
 			});
-			console.log(this.device)
 		}
 
 		setup_call_info(frm, to_number) {
