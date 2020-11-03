@@ -94,7 +94,7 @@ def generate_access_token():
 	api_secret = twilio_settings.get_password("api_secret")
 
 	# Generate a random user name
-	identity = "Sample"+str(randrange(44))
+	identity = frappe.session.user+""+str(randrange(44))
 
 	# Create access token with credentials
 	token = AccessToken(account_sid, api_key, api_secret, identity=identity)
