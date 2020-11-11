@@ -22,6 +22,8 @@ from frappe.website.render import build_response
 
 class TwilioSettings(Document):
 	def on_update(self):
+		if not self.enabled:
+			return
 		client = Client(self.account_sid, self.get_password("auth_token"))
 		self.validate_twilio_credentials(client)
 		self.generate_api_credentials(client)
@@ -58,12 +60,11 @@ def send_whatsapp_message(sender, receiver_list, message):
 	auth_token = get_decrypted_password("Twilio Settings", "Twilio Settings", 'auth_token')
 	client = Client(twilio_settings.account_sid, auth_token)
 	args = {
-		"from_": 'whatsapp:+{}'.format(sender),
+		"from_": 'whatsapp:{}'.format(sender),
 		"body": message
 	}
 
 	failed_delivery = []
-
 	for rec in receiver_list:
 		args.update({"to": 'whatsapp:{}'.format(rec)})
 		resp = _send_whatsapp(args, client)
