@@ -1,6 +1,25 @@
-## Twilio Integration
+# Twilio Integration
 
 Custom Frappe Application for Twilio Integration
+
+## Features
+- Users can make outgoing voice calls by clicking at the phone icon that shows up next to the phone number.
+- Users can send notifications through whatsapp.
+
+### Voice Call
+
+Once user clicks the phone icon next to the phone number, user will see a phone popup with a call button. Make sure that area code is included in the phone number(ex: +91) before using the call button to make outgoing calls.
+
+<kbd><img src=".github/twilio-phone-popup.png" alt="Frappe Books Preview" /></kbd>
+
+### WhatsApp message
+
+Users can send notifications through WhatsApp channel. While creating/editing a notification please Select Channel as `WhatsApp` and Twilio number from dropdown if you want to send whatsapp notification.
+
+<kbd><img src=".github/twilio-whatsapp-notification.png" alt="Frappe Books Preview" /></kbd>
+
+
+## Development
 
 ### Pre-requisites
 - [ERPNext](https://docs.erpnext.com/docs/user/manual/en/introduction/getting-started-with-erpnext#4-install-erpnext-on-your-unixlinuxmac-machine
@@ -35,12 +54,8 @@ Use `bench start` command to run the project.
 
 NOTE: While creating a new `communication medium` for `Outgoing Voice Medium` pass twilio number(including area code(ex:+91)) as Name, `Twilio` as communication channel and `Voice` as Communication Medium Type.
 
-### What To Expect
- In Project's Web Interface
-
-- You will see a phone icon next to the phone numbers. You can make a voice call by clicking that icon.
-- You can use Whatsapp feature while creating/editing item in `Notification` doctype.
 
 #### License
 
 MIT
+
