@@ -87,15 +87,23 @@ def _send_whatsapp(message_dict, client):
 @frappe.whitelist()
 def generate_access_token():
 
+	def _safe_identity(identity):
+		"""Create a safe identity by replacing unsupported special charaters with '-'.
+
+		Twilio Client JS fails to make a call connection if identity has special characters like @, [, / etc)
+		"""
+		return re.sub(r'[^a-zA-Z0-9_.-]+', '-', identity).strip()
+
 	twilio_settings = frappe.get_doc("Twilio Settings")
+
 	# get credentials for environment variables
 	account_sid = twilio_settings.account_sid
 	application_sid = twilio_settings.twiml_sid
 	api_key = twilio_settings.api_key
 	api_secret = twilio_settings.get_password("api_secret")
 
-	# Generate a random user name
-	identity = frappe.session.user+""+str(randrange(44))
+	# identity is used by twilio to identify the user uniqueness at browser(or any endpoints).
+	identity = _safe_identity(frappe.session.user)
 
 	# Create access token with credentials
 	token = AccessToken(account_sid, api_key, api_secret, identity=identity)
