@@ -171,11 +171,9 @@ var onload_script = function() {
 		}
 	}
 
-	frappe.db.get_single_value('Twilio Settings', 'enabled').then(is_integration_enabled => {
-		if (is_integration_enabled) {
-			frappe.phone_call.handler = (to_number, frm) => new TwilioCall(to_number, frm);
-		}
-	});
+	if (frappe.boot.twilio_settings_enabled){
+		frappe.phone_call.handler = (to_number, frm) => new TwilioCall(to_number, frm);
+	};
 }
 
 var script = document.createElement('script');
