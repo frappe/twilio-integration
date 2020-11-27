@@ -139,3 +139,7 @@ doctype_js = {
 override_doctype_class = {
 	"Notification": "twilio_integration.overrides.notification.SendNotification"
 }
+
+# boot
+# ----------
+boot_session = "twilio_integration.boot.boot_session"
