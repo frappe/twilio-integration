@@ -43,7 +43,8 @@ app_include_js = "assets/js/twilio-call-handler.js"
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}
 doctype_js = {
-	"Notification" : "public/js/Notification.js"
+	"Notification" : "public/js/Notification.js",
+	"Voice Call Settings": "public/js/voice_call_settings.js"
 }
 
 # Home Pages
