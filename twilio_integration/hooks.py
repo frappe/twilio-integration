@@ -10,7 +10,14 @@ app_icon = "octicon octicon-file-directory"
 app_color = "grey"
 app_email = "developers@frappe.io"
 app_license = "MIT"
-fixtures = ["Custom Field", "Property Setter"]
+fixtures = [{"dt": "Custom Field", "filters": [
+		[
+			"name", "in", [
+				"Notification-twilio_number", "Voice Call Settings-twilio_number"
+			]
+		]
+	]}
+, "Property Setter"]
 
 # Includes in <head>
 # ------------------
