@@ -3,10 +3,10 @@ var onload_script = function() {
 	class TwilioCall {
 		constructor(to_number, frm) {
 			frappe.call({
-				method: "twilio_integration.twilio_integration.doctype.twilio_settings.twilio_settings.generate_access_token",
+				method: "twilio_integration.twilio_integration.twilio.generate_access_token",
 				callback: (data) => {
 					frappe.run_serially([
-						() => this.setup_device(data.token),
+						() => this.setup_device(data.message.token),
 						() => this.setup_device_listener(),
 						() => this.setup_call_info(frm, to_number),
 						() => this.make()
@@ -89,7 +89,7 @@ var onload_script = function() {
 			me.device.on("incoming", function (conn) {
 				console.log("Incoming connection from " + conn.parameters.From);
 				var archEnemyPhoneNumber = "+12093373517";
-		
+
 				if (conn.parameters.From === archEnemyPhoneNumber) {
 					conn.reject();
 					log("It's your nemesis. Rejected call.");

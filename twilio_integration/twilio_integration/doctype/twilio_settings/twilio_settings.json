@@ -37,39 +37,44 @@
   {
    "fieldname": "api_key",
    "fieldtype": "Data",
-   "label": "API Key"
+   "label": "API Key",
+   "permlevel": 1
   },
   {
    "fieldname": "api_secret",
    "fieldtype": "Password",
-   "label": "API Secret"
+   "label": "API Secret",
+   "permlevel": 1
   },
   {
    "fieldname": "twiml_sid",
    "fieldtype": "Data",
-   "label": "TwiML SID"
+   "label": "TwiML SID",
+   "permlevel": 1
   },
   {
    "fieldname": "column_break_3",
    "fieldtype": "Column Break"
   },
   {
-   "default": "0",
+   "default": "1",
    "fieldname": "record_calls",
    "fieldtype": "Check",
-   "label": "Record Calls"
+   "label": "Record Calls",
+   "permlevel": 1
   },
   {
    "fieldname": "outgoing_voice_medium",
    "fieldtype": "Link",
    "label": "Outgoing Voice Medium",
-   "options": "Communication Medium"
+   "options": "Communication Medium",
+   "permlevel": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2020-11-02 22:14:27.011590",
+ "modified": "2020-12-10 22:54:10.550003",
  "modified_by": "Administrator",
  "module": "Twilio Integration",
  "name": "Twilio Settings",
