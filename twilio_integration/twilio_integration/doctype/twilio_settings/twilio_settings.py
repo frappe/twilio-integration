@@ -21,31 +21,78 @@ from twilio.twiml.voice_response import VoiceResponse, Dial
 from frappe.website.render import build_response
 
 class TwilioSettings(Document):
-	def on_update(self):
-		if not self.enabled:
-			return
-		client = Client(self.account_sid, self.get_password("auth_token"))
-		self.validate_twilio_credentials(client)
-		self.generate_api_credentials(client)
+	friendly_resource_name = "ERPNext" # Name used by twilio applications and API keys created behind the scenes.
 
-	def validate_twilio_credentials(self, client):
+	def validate(self):
+		self.validate_twilio_account()
+
+	def on_update(self):
+		twilio = Client(self.account_sid, self.get_password("auth_token"))
+		self.set_api_credentials(twilio)
+		self.set_application_credentials(twilio)
+		self.reload()
+
+	def validate_twilio_account(self):
 		try:
-			client.api.accounts(self.account_sid).fetch()
+			twilio = Client(self.account_sid, self.get_password("auth_token"))
+			twilio.api.accounts(self.account_sid).fetch()
+			return twilio
 		except Exception:
 			frappe.throw(_("Invalid Account SID or Auth Token."))
 
-	def generate_api_credentials(self, client):
-		if self.api_key and self.api_secret or not self.enabled:
+	def set_api_credentials(self, twilio):
+		"""Generate Twilio API credentials if not exist and update them.
+		"""
+		if self.api_key and self.api_secret:
 			return
+		new_key = self.create_api_key(twilio)
+		self.api_key = new_key.sid
+		self.api_secret = new_key.secret
+		frappe.db.set_value('Twilio Settings', 'Twilio Settings', {
+			'api_key': self.api_key,
+			'api_secret': self.api_secret
+		})
 
+	def set_application_credentials(self, twilio):
+		"""Generate TwiML app credentials if not exist and update them.
+		"""
+		credentials = self.get_application(twilio) or self.create_application(twilio)
+		self.twiml_sid = credentials.sid
+		frappe.db.set_value('Twilio Settings', 'Twilio Settings', 'twiml_sid', self.twiml_sid)
+
+	def create_api_key(self, twilio):
+		"""Create API keys in twilio account.
+		"""
 		try:
-			credential = client.new_keys.create(friendly_name='Frappe')
-			self.api_key = credential.sid
-			self.api_secret = credential.secret
-			self.save()
+			return twilio.new_keys.create(friendly_name=self.friendly_resource_name)
 		except Exception:
 			frappe.log_error(title=_("Twilio API credential creation error."))
 			frappe.throw(_("Twilio API credential creation error."))
+
+	def get_twilio_voice_url(self):
+		#TODO: FixMe
+		voice_url = "/api/method/twilio_integration.twilio_integration.doctype.twilio_settings.twilio_settings.voice"
+		# return frappe.utils.get_url(voice_url)
+		return "http://127.0.0.1" + voice_url
+
+	def get_application(self, twilio, friendly_name=None):
+		"""Get TwiML App from twilio account if exists.
+		"""
+		friendly_name = friendly_name or self.friendly_resource_name
+		applications = twilio.applications.list(friendly_name)
+		return applications and applications[0]
+
+	def create_application(self, twilio, friendly_name=None):
+		"""Create TwilML App in twilio account.
+		"""
+		friendly_name = friendly_name or self.friendly_resource_name
+		application = twilio.applications.create(
+						voice_method='GET',
+						voice_url=self.get_twilio_voice_url(),
+						friendly_name=friendly_name
+					)
+		return application
+
 
 def send_whatsapp_message(sender, receiver_list, message):
 	twilio_settings = frappe.get_doc("Twilio Settings")
@@ -84,46 +131,6 @@ def _send_whatsapp(message_dict, client):
 
 	return response
 
-@frappe.whitelist()
-def generate_access_token():
-
-	def _safe_identity(identity):
-		"""Create a safe identity by replacing unsupported special charaters with '-'.
-
-		Twilio Client JS fails to make a call connection if identity has special characters like @, [, / etc)
-		"""
-		return re.sub(r'[^a-zA-Z0-9_.-]+', '-', identity).strip()
-
-	twilio_settings = frappe.get_doc("Twilio Settings")
-
-	# get credentials for environment variables
-	account_sid = twilio_settings.account_sid
-	application_sid = twilio_settings.twiml_sid
-	api_key = twilio_settings.api_key
-	api_secret = twilio_settings.get_password("api_secret")
-
-	# identity is used by twilio to identify the user uniqueness at browser(or any endpoints).
-	identity = _safe_identity(frappe.session.user)
-
-	# Create access token with credentials
-	token = AccessToken(account_sid, api_key, api_secret, identity=identity)
-
-	# Create a Voice grant and add to token
-	voice_grant = VoiceGrant(
-		outgoing_application_sid=application_sid,
-		incoming_allow=True,
-	)
-	token.add_grant(voice_grant)
-
-	# Return token info as JSON
-	token=token.to_jwt()
-
-	resp = dumps({
-			'identity': identity,
-			'token': token.decode('utf-8')
-		})
-
-	return build_response('', resp, 200, headers = {"Content-Type": "application/json; charset=utf-8"})
 
 @frappe.whitelist(allow_guest=True)
 def voice(**kwargs):
