@@ -7,7 +7,6 @@ import frappe
 from frappe.model.document import Document
 from frappe import _
 from frappe.utils.password import get_decrypted_password
-from frappe.utils import get_request_site_address
 
 from six import string_types
 import re
@@ -16,12 +15,10 @@ from random import randrange
 
 from twilio.rest import Client
 from twilio.jwt.access_token import AccessToken
-from twilio.jwt.access_token.grants import VoiceGrant
-from twilio.twiml.voice_response import VoiceResponse, Dial
-from frappe.website.render import build_response
+from ...utils import get_public_url
 
 class TwilioSettings(Document):
-	friendly_resource_name = "ERPNext" # Name used by twilio applications and API keys created behind the scenes.
+	friendly_resource_name = "ERPNext" # System creates TwiML app & API keys with this name.
 
 	def validate(self):
 		self.validate_twilio_account()
@@ -70,10 +67,8 @@ class TwilioSettings(Document):
 			frappe.throw(_("Twilio API credential creation error."))
 
 	def get_twilio_voice_url(self):
-		#TODO: FixMe
-		voice_url = "/api/method/twilio_integration.twilio_integration.doctype.twilio_settings.twilio_settings.voice"
-		# return frappe.utils.get_url(voice_url)
-		return "http://127.0.0.1" + voice_url
+		url_path = "/api/method/twilio_integration.twilio_integration.api.voice"
+		return get_public_url(url_path)
 
 	def get_application(self, twilio, friendly_name=None):
 		"""Get TwiML App from twilio account if exists.
@@ -87,7 +82,7 @@ class TwilioSettings(Document):
 		"""
 		friendly_name = friendly_name or self.friendly_resource_name
 		application = twilio.applications.create(
-						voice_method='GET',
+						voice_method='POST',
 						voice_url=self.get_twilio_voice_url(),
 						friendly_name=friendly_name
 					)
@@ -130,76 +125,3 @@ def _send_whatsapp(message_dict, client):
 		frappe.log_error(e, title = _('Twilio WhatsApp Message Error'))
 
 	return response
-
-
-@frappe.whitelist(allow_guest=True)
-def voice(**kwargs):
-	try:
-		twilio_settings = frappe.get_doc("Twilio Settings")
-		default_outgoing = twilio_settings.outgoing_voice_medium
-		args = frappe._dict(kwargs)
-		phone_pattern = re.compile(r"^[\d\+\-\(\) ]+$")
-		resp = VoiceResponse()
-		if args.To != '':
-			phone = args.To
-			recording_status_callback = get_request_site_address(True) + "/api/method/twilio_integration.twilio_integration.doctype.twilio_settings.twilio_settings.update_recording_info"
-
-			dial = Dial(caller_id=default_outgoing, record=twilio_settings.record_calls,
-				recording_status_callback=recording_status_callback, recording_status_callback_event='completed')
-
-			# wrap the phone number or client name in the appropriate TwiML verb
-			# by checking if the number given has only digits and format symbols
-			if phone_pattern.match(phone):
-				dial.number(phone)
-			else:
-				dial.client(phone)
-			resp.append(dial)
-			create_call_log(args)
-		else:
-			resp.say("Thanks for calling!")
-
-		return build_response('', str(resp), 200, headers = {"Content-Type": "text/xml; charset=utf-8"})
-	except Exception:
-		frappe.log_error("Twilio call Error")
-
-@frappe.whitelist()
-def create_call_log(call_payload):
-	default_outgoing = frappe.db.get_single_value("Twilio Settings", "outgoing_voice_medium")
-	call_log = frappe.get_doc({
-		"doctype": "Call Log",
-		"id": call_payload.get("CallSid"),
-		"to": call_payload.get("To"),
-		"status": "Ringing",
-		"medium": default_outgoing,
-		"from": default_outgoing
-	})
-	call_log.flags.ignore_permissions = True
-	call_log.save()
-
-@frappe.whitelist()
-def update_call_log(call_sid, status="In Progress"):
-	# update the call log status
-
-	if not frappe.db.exists("Call Log", call_sid): return
-
-	call_details = get_call_info(call_sid)
-	call_log = frappe.get_doc("Call Log", call_sid)
-	call_log.status = status
-	call_log.duration = call_details.duration
-	call_log.flags.ignore_permissions = True
-	call_log.save()
-
-def get_call_info(call_sid):
-	twilio_settings = frappe.get_doc("Twilio Settings")
-	client = Client(twilio_settings.account_sid, twilio_settings.get_password("auth_token"))
-	return client.calls(call_sid).fetch()
-
-@frappe.whitelist(allow_guest=True)
-def update_recording_info(**kwargs):
-	try:
-		args = frappe._dict(kwargs)
-		recording_url = args.RecordingUrl
-		call_sid = args.CallSid
-		frappe.db.set_value("Call Log", call_sid, "recording_url", recording_url)
-	except:
-		frappe.log_error(title=_("Failed to capture Twilio recording"))
