@@ -3,7 +3,7 @@ var onload_script = function() {
 	class TwilioCall {
 		constructor(to_number, frm) {
 			frappe.call({
-				method: "twilio_integration.twilio_integration.twilio.generate_access_token",
+				method: "twilio_integration.twilio_integration.api.generate_access_token",
 				callback: (data) => {
 					frappe.run_serially([
 						() => this.setup_device(data.message.token),
@@ -26,6 +26,7 @@ var onload_script = function() {
 					'fieldtype': 'Autocomplete',
 					'ignore_validation': true,
 					'options': this.to_numbers,
+					'default': this.to_numbers[0],
 					'read_only': 0,
 					'reqd': 1
 				}],
@@ -162,7 +163,7 @@ var onload_script = function() {
 		update_call_log(conn, status="Completed") {
 			if (!conn.parameters.CallSid) return
 			frappe.call({
-				"method": "twilio_integration.twilio_integration.doctype.twilio_settings.twilio_settings.update_call_log",
+				"method": "twilio_integration.twilio_integration.api.update_call_log",
 				"args": {
 					"call_sid": conn.parameters.CallSid,
 					"status": status
@@ -171,7 +172,7 @@ var onload_script = function() {
 		}
 	}
 
-	if (frappe.boot.twilio_settings_enabled){
+	if (frappe.boot.twilio_enabled){
 		frappe.phone_call.handler = (to_number, frm) => new TwilioCall(to_number, frm);
 	};
 }
