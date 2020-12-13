@@ -54,8 +54,29 @@ var onload_script = function() {
 					}
 				}
 			});
+			$('<input type="button" class="btn btn-mute hide" value="Mute"/>').appendTo(this.dialog.buttons);
 			this.dialog.show();
 			this.dialog.get_close_btn().show();
+		}
+
+		setup_mute_button(twilio_conn) {
+			var mute_button = this.dialog.buttons.find('.btn-mute');
+			mute_button.removeClass('hide');
+			mute_button.on('click', function (event) {
+				if (this.value == 'Mute') {
+					twilio_conn.mute(true);
+					this.value='Unmute';
+				}
+				else {
+					twilio_conn.mute(false);
+					this.value = 'Mute';
+				}
+			});
+		}
+
+		hide_mute_button() {
+			var mute_button = this.dialog.buttons.find('.btn-mute');
+			mute_button.addClass('hide');
 		}
 
 		setup_device_listener() {
@@ -76,10 +97,12 @@ var onload_script = function() {
 				me.set_call_as_complete();
 				window.onbeforeunload = null;
 				me.set_header("available");
-				me.update_call_log(conn)
+				me.hide_mute_button();
+				me.update_call_log(conn);
 			});
 
 			me.device.on("connect", function (conn) {
+				me.setup_mute_button(conn);
 				me.dialog.set_secondary_action_label("Hang Up")
 				me.set_header("in-progress");
 				window.onbeforeunload = function() {
