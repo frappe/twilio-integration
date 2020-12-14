@@ -6,17 +6,22 @@ Custom Frappe Application for Twilio Integration
 - Users can make outgoing voice calls by clicking at the phone icon that shows up next to the phone number.
 - Users can send notifications through whatsapp.
 
+### Authorize twilio
+To authorise Twilio integration go to Twilio Settings Doctype and provide `Account SID` and `Auth Token`. Make sure Twilio Settings are enabled to use Twilio in the system.
+
+<kbd><img src=".github/twilio-settings.png" alt="Twilio Settings" /></kbd>
+
 ### Voice Call
 
 Once user clicks the phone icon next to the phone number, user will see a phone popup with a call button. Make sure that area code is included in the phone number(ex: +91) before using the call button to make outgoing calls.
 
-<kbd><img src=".github/twilio-phone-popup.png" alt="Frappe Books Preview" /></kbd>
+<kbd><img src=".github/twilio-phone-popup.png" alt="Twilio Phone Popup" /></kbd>
 
 ### WhatsApp message
 
 Users can send notifications through WhatsApp channel. While creating/editing a notification please Select Channel as `WhatsApp` and Twilio number from dropdown if you want to send whatsapp notification.
 
-<kbd><img src=".github/twilio-whatsapp-notification.png" alt="Frappe Books Preview" /></kbd>
+<kbd><img src=".github/twilio-whatsapp-notification.png" alt="Twilio Whatsapp notification" /></kbd>
 
 
 ## Development
