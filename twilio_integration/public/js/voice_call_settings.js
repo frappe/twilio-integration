@@ -24,10 +24,10 @@ frappe.ui.form.on('Voice Call Settings', {
 	},
 	user: function(frm) {
 		frappe.db.exists('Voice Call Settings', frm.doc.user).then( exists => {
-			if (exists) {
+			if (frm.doc.user && exists) {
 				var doc_url = `/desk#Form/${frm.doc.doctype}/${frm.doc.user}`;
 				var link_html = `<a href="${doc_url}">here</a>`;
-				frappe.msgprint(__('Voice call settings already exists for this user. You can edit them {0}', [link_html]));
+				frappe.msgprint(__('Voice call settings already exist for user {0}. You can edit them {1}', [frm.doc.user, link_html]));
 			}
 		});
 	}
