@@ -15,7 +15,7 @@ frappe.ui.form.on('Voice Call Settings', {
 				}
 				else {
 					frappe.show_alert({
-						message:__('Voice settings rely on twilio settings. Please make sure that twilio settings are configured & enabled.'),
+						message:__('Voice settings rely on Twilio settings. Please make sure that Twilio settings are configured & enabled.'),
 						indicator:'red'
 					}, 6);
 				}
