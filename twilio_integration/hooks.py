@@ -24,7 +24,7 @@ fixtures = [{"dt": "Custom Field", "filters": [
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/twilio_integration/css/twilio_integration.css"
-app_include_js = "assets/js/twilio-call-handler.js"
+app_include_js = "/assets/js/twilio-call-handler.js"
 
 # include js, css files in header of web template
 # web_include_css = "/assets/twilio_integration/css/twilio_integration.css"
