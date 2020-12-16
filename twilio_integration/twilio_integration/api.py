@@ -53,29 +53,33 @@ def voice(**kwargs):
 
 @frappe.whitelist(allow_guest=True)
 def twilio_incoming_call_handler(**kwargs):
-	# TODO: Log as and when request comes
 	args = frappe._dict(kwargs)
-	from_number = args.From
-	to_number = args.To
+	args.from_number = args.From
+	args.to_number = args.To
+	create_call_log(args)
 
-	resp = IncomingCall(from_number, to_number).process()
+	resp = IncomingCall(args.from_number, args.to_number).process()
 	return Response(resp.to_xml(), mimetype='text/xml')
 
 @frappe.whitelist()
 def create_call_log(call_payload):
+	is_outbound = call_payload.get('Caller', '').lower().startswith('client')
+	direction = (is_outbound and 'Outbound') or 'Inbound'
+
 	call_log = frappe.get_doc({
 		"doctype": "Call Log",
+		"direction": direction,
+		"status": call_payload.get('CallStatus', '').title(),
 		"id": call_payload.get("CallSid"),
 		"to": call_payload.get("to_number"),
-		"status": "Ringing",
 		"medium": call_payload.get("from_number"),
-		"from": call_payload.get("from_number")
+		"from": call_payload.get("from_number"),
 	})
 	call_log.flags.ignore_permissions = True
 	call_log.save()
 
 @frappe.whitelist()
-def update_call_log(call_sid, status="In Progress"):
+def update_call_log(call_sid, status=None):
 	"""Update call log status.
 	"""
 	twilio = Twilio.connect()
@@ -83,7 +87,7 @@ def update_call_log(call_sid, status="In Progress"):
 
 	call_details = twilio.get_call_info(call_sid)
 	call_log = frappe.get_doc("Call Log", call_sid)
-	call_log.status = status
+	call_log.status = status or call_details.CallStatus.title()
 	call_log.duration = call_details.duration
 	call_log.flags.ignore_permissions = True
 	call_log.save()
