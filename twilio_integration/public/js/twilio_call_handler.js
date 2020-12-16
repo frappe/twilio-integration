@@ -203,4 +203,4 @@ var onload_script = function() {
 var script = document.createElement('script');
 document.head.appendChild(script);
 script.onload = onload_script;
-script.src = "//sdk.twilio.com/js/client/releases/1.10.1/twilio.js";
+script.src = "https://sdk.twilio.com/js/client/releases/1.13.0/twilio.js";

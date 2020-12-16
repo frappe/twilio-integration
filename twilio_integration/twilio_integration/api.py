@@ -1,90 +1,6 @@
-import re
-import json
 from werkzeug.wrappers import Response
-from twilio.rest import Client as TwilioClient
-from twilio.jwt.access_token import AccessToken
-from twilio.jwt.access_token.grants import VoiceGrant
-from twilio.twiml.voice_response import VoiceResponse, Dial
-
 import frappe
-from .utils import get_public_url
-
-class Twilio:
-	"""Twilio connector over TwilioClient.
-	"""
-	def __init__(self, settings):
-		"""
-		:param settings: `Twilio Settings` doctype
-		"""
-		self.settings = settings
-		self.account_sid = settings.account_sid
-		self.application_sid = settings.twiml_sid
-		self.api_key = settings.api_key
-		self.api_secret = settings.get_password("api_secret")
-		self.twilio_client = TwilioClient(self.account_sid, settings.get_password("auth_token"))
-
-	@classmethod
-	def connect(self):
-		"""Make a twilio connection.
-		"""
-		settings = frappe.get_doc("Twilio Settings")
-		if not (settings and settings.enabled):
-			return
-		return Twilio(settings=settings)
-
-	def get_phone_numbers(self):
-		"""Get account's twilio phone numbers.
-		"""
-		numbers = self.twilio_client.incoming_phone_numbers.list()
-		return [n.phone_number for n in numbers]
-
-	def generate_voice_access_token(self, from_number: str, identity_postfix=None, ttl=60*60):
-		"""Generates a token required to make voice calls from the browser.
-		"""
-		# identity is used by twilio to identify the user uniqueness at browser(or any endpoints).
-		identity = from_number
-		if identity_postfix:
-			identity = '_'.join([identity, self.safe_identity(identity_postfix)])
-
-		# Create access token with credentials
-		token = AccessToken(self.account_sid, self.api_key, self.api_secret, identity=identity, ttl=ttl)
-
-		# Create a Voice grant and add to token
-		voice_grant = VoiceGrant(
-			outgoing_application_sid=self.application_sid,
-			incoming_allow=True, # Allow incoming calls
-		)
-		token.add_grant(voice_grant)
-		return token.to_jwt()
-
-	@classmethod
-	def safe_identity(cls, identity: str):
-		"""Create a safe identity by replacing unsupported special charaters with '-'.
-		Twilio Client JS fails to make a call connection if identity has special characters like @, [, / etc)
-		https://www.twilio.com/docs/voice/client/errors (#31105)
-		"""
-		return re.sub(r'[^a-zA-Z0-9_.-]+', '-', identity).strip()
-
-	def generate_twilio_dial_response(self, from_number: str, to_number: str):
-		"""Generates voice call instructions needed for twilio.
-		"""
-		url_path = "/api/method/twilio_integration.twilio_integration.api.update_recording_info"
-		recording_status_callback = get_public_url(url_path)
-
-		resp = VoiceResponse()
-		dial = Dial(
-			caller_id=from_number,
-			record=self.settings.record_calls,
-			recording_status_callback=recording_status_callback,
-			recording_status_callback_event='completed'
-		)
-		dial.number(to_number)
-		resp.append(dial)
-		return resp
-
-	def get_call_info(self, call_sid):
-		return self.twilio_client.calls(call_sid).fetch()
-
+from .twilio_handler import Twilio, IncomingCall
 
 @frappe.whitelist()
 def get_twilio_phone_numbers():
@@ -133,6 +49,16 @@ def voice(**kwargs):
 	resp = twilio.generate_twilio_dial_response(args.from_number, args.to_number)
 	create_call_log(args)
 
+	return Response(resp.to_xml(), mimetype='text/xml')
+
+@frappe.whitelist(allow_guest=True)
+def twilio_incoming_call_handler(**kwargs):
+	# TODO: Log as and when request comes
+	args = frappe._dict(kwargs)
+	from_number = args.From
+	to_number = args.To
+
+	resp = IncomingCall(from_number, to_number).process()
 	return Response(resp.to_xml(), mimetype='text/xml')
 
 @frappe.whitelist()
