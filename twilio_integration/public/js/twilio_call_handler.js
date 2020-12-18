@@ -50,32 +50,43 @@ var onload_script = function() {
 				secondary_action: () => {
 					if (this.device) {
 						this.device.disconnectAll();
+					}
+				},
+				onhide: () => {
+					if (this.device) {
+						this.device.disconnectAll();
 						this.device.destroy();
 					}
 				}
 			});
-			$('<input type="button" class="btn btn-mute hide" value="Mute"/>').appendTo(this.dialog.buttons);
+
+			this.dialog.add_custom_action('Mute', null, 'btn-mute hide');
+			this.dialog.get_secondary_btn().addClass('hide');
 			this.dialog.show();
 			this.dialog.get_close_btn().show();
 		}
 
+		hide_hangup_button() {
+			this.dialog.get_secondary_btn().addClass('hide')
+		}
+
 		setup_mute_button(twilio_conn) {
-			var mute_button = this.dialog.buttons.find('.btn-mute');
+			var mute_button = this.dialog.custom_actions.find('.btn-mute');
 			mute_button.removeClass('hide');
 			mute_button.on('click', function (event) {
-				if (this.value == 'Mute') {
+				if ($(this).text().trim() == 'Mute') {
 					twilio_conn.mute(true);
-					this.value='Unmute';
+					$(this).html('Unmute');
 				}
 				else {
 					twilio_conn.mute(false);
-					this.value = 'Mute';
+					$(this).html('Mute');
 				}
 			});
 		}
 
 		hide_mute_button() {
-			var mute_button = this.dialog.buttons.find('.btn-mute');
+			var mute_button = this.dialog.custom_actions.find('.btn-mute');
 			mute_button.addClass('hide');
 		}
 
@@ -92,12 +103,12 @@ var onload_script = function() {
 			});
 
 			me.device.on("disconnect", function (conn) {
-				me.dialog.set_secondary_action_label("Close")
 				me.dialog.enable_primary_action();
 				me.set_call_as_complete();
 				window.onbeforeunload = null;
 				me.set_header("available");
 				me.hide_mute_button();
+				me.hide_hangup_button();
 				me.update_call_log(conn);
 			});
 
