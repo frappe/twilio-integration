@@ -1,22 +1,26 @@
 var onload_script = function() {
 	frappe.provide('frappe.phone_call');
-	class TwilioCall {
-		constructor(to_number, frm) {
-			frappe.call({
-				method: "twilio_integration.twilio_integration.api.generate_access_token",
-				callback: (data) => {
-					frappe.run_serially([
-						() => this.setup_device(data.message.token),
-						() => this.setup_device_listener(),
-						() => this.setup_call_info(frm, to_number),
-						() => this.make()
-					]);
-				}
-			})
-		}
+	var device;
+	var dialog;
 
-		make() {
-			this.dialog = new frappe.ui.Dialog({
+	if (frappe.boot.twilio_enabled){
+		frappe.run_serially([
+			() => setup_device(),
+			() => dialer()
+		]);
+	}
+
+	function dialer() {
+		frappe.phone_call.handler = (to_number, frm) => {
+			var to_numbers;
+			if (Array.isArray(to_number)) {
+				to_numbers = to_number;
+			} else {
+				to_numbers = to_number.split('\n');
+			}
+
+			// TODO: Make sure that device is available
+			dialog = new frappe.ui.Dialog({
 				'static': 1,
 				'title': __('Make a Call'),
 				'minimizable': true,
@@ -25,179 +29,165 @@ var onload_script = function() {
 					'label': 'To Number',
 					'fieldtype': 'Autocomplete',
 					'ignore_validation': true,
-					'options': this.to_numbers,
-					'default': this.to_numbers[0],
+					'options': to_numbers,
+					'default': to_numbers[0],
 					'read_only': 0,
 					'reqd': 1
 				}],
 				primary_action: () => {
-					this.dialog.disable_primary_action();
+					dialog.disable_primary_action();
 					var params = {
-						To: this.dialog.get_value('to_number')
+						To: dialog.get_value('to_number') // FIXME: how to access dialog?
 					};
 
-					if (this.device) {
-						let me = this;
-						var outgoingConnection = this.device.connect(params);
+					if (device) {
+						var outgoingConnection = device.connect(params);
 						outgoingConnection.on("ringing", function () {
-							me.set_header('ringing');
+							set_header('ringing');
 						});
 					} else {
-						this.dialog.enable_primary_action();
+						dialog.enable_primary_action();
 					}
 				},
 				primary_action_label: __('Call'),
 				secondary_action: () => {
-					if (this.device) {
-						this.device.disconnectAll();
-						this.device.destroy();
+					if (device) {
+						device.disconnectAll();
 					}
 				}
 			});
-			$('<input type="button" class="btn btn-mute hide" value="Mute"/>').appendTo(this.dialog.buttons);
-			this.dialog.show();
-			this.dialog.get_close_btn().show();
-		}
-
-		setup_mute_button(twilio_conn) {
-			var mute_button = this.dialog.buttons.find('.btn-mute');
-			mute_button.removeClass('hide');
-			mute_button.on('click', function (event) {
-				if (this.value == 'Mute') {
-					twilio_conn.mute(true);
-					this.value='Unmute';
-				}
-				else {
-					twilio_conn.mute(false);
-					this.value = 'Mute';
-				}
-			});
-		}
-
-		hide_mute_button() {
-			var mute_button = this.dialog.buttons.find('.btn-mute');
-			mute_button.addClass('hide');
-		}
-
-		setup_device_listener() {
-			var me = this;
-			me.device.on("ready", function (device) {
-				me.set_header('available');
-			});
-
-			me.device.on("error", function (error) {
-				me.set_header("failed");
-				this.device.disconnectAll();
-				frappe.throw(__("Twilio Device Error: " + error.message));
-			});
-
-			me.device.on("disconnect", function (conn) {
-				me.dialog.set_secondary_action_label("Close")
-				me.dialog.enable_primary_action();
-				me.set_call_as_complete();
-				window.onbeforeunload = null;
-				me.set_header("available");
-				me.hide_mute_button();
-				me.update_call_log(conn);
-			});
-
-			me.device.on("connect", function (conn) {
-				me.setup_mute_button(conn);
-				me.dialog.set_secondary_action_label("Hang Up")
-				me.set_header("in-progress");
-				window.onbeforeunload = function() {
-					return "you can not refresh the page";
-				}
-			});
-
-			me.device.on("incoming", function (conn) {
-				console.log("Incoming connection from " + conn.parameters.From);
-				var archEnemyPhoneNumber = "+12093373517";
-
-				if (conn.parameters.From === archEnemyPhoneNumber) {
-					conn.reject();
-					log("It's your nemesis. Rejected call.");
-				} else {
-					// accept the incoming connection and start two-way audio
-					conn.accept();
-				}
-			});
-		}
-
-		setup_device(access_token) {
-			// Setup Twilio Device
-			this.device = new Twilio.Device(access_token, {
-				codecPreferences: ["opus", "pcmu"],
-				fakeLocalDTMF: true,
-				enableRingingState: true,
-			});
-		}
-
-		setup_call_info(frm, to_number) {
-			// to_number call be string or array
-			// like '12345' or ['1234', '4567'] or '1234\n4567'
-			if (Array.isArray(to_number)) {
-				this.to_numbers = to_number;
-			} else {
-				this.to_numbers = to_number.split('\n');
-			}
-
-			// record the document to link
-			if (frm) {
-				this.document_to_link = {
-					'link_doctype': frm.doctype,
-					'link_name': frm.docname
-				};
-			}
-		}
-
-		setup_call_status_updater() {
-			if (!this.updater) {
-				this.updater = setInterval(this.set_call_status.bind(this), 1000);
-			}
-		}
-
-		set_call_as_complete() {
-			this.dialog.get_close_btn().show();
-			clearInterval(this.updater);
-		}
-
-		set_header(status) {
-			this.dialog.set_title(frappe.model.unscrub(status));
-			const indicator_class = this.get_status_indicator(status);
-			this.dialog.header.find('.indicator').attr('class', `indicator ${indicator_class}`);
-		}
-
-		get_status_indicator(status) {
-			const indicator_map = {
-				'available': 'blue',
-				'completed': 'blue',
-				'failed': 'red',
-				'busy': 'yellow',
-				'no-answer': 'orange',
-				'queued': 'orange',
-				'ringing': 'green blink',
-				'in-progress': 'green blink'
-			};
-			const indicator_class = `indicator ${indicator_map[status] || 'blue blink'}`;
-			return indicator_class;
-		}
-
-		update_call_log(conn, status="Completed") {
-			if (!conn.parameters.CallSid) return
-			frappe.call({
-				"method": "twilio_integration.twilio_integration.api.update_call_log",
-				"args": {
-					"call_sid": conn.parameters.CallSid,
-					"status": status
-				}
-			})
+			$('<input type="button" class="btn btn-mute hide" value="Mute"/>').appendTo(dialog.buttons);
+			dialog.show();
+			dialog.get_close_btn().show();
 		}
 	}
 
-	if (frappe.boot.twilio_enabled){
-		frappe.phone_call.handler = (to_number, frm) => new TwilioCall(to_number, frm);
-	};
+	function set_header(status){
+		if (!dialog){
+			return;
+		}
+		dialog.set_title(frappe.model.unscrub(status));
+		const indicator_class = get_status_indicator(status);
+		dialog.header.find('.indicator').attr('class', `indicator ${indicator_class}`);
+	}
+
+	function get_status_indicator(status) {
+		const indicator_map = {
+			'available': 'blue',
+			'completed': 'blue',
+			'failed': 'red',
+			'busy': 'yellow',
+			'no-answer': 'orange',
+			'queued': 'orange',
+			'ringing': 'green blink',
+			'in-progress': 'green blink'
+		};
+		const indicator_class = `indicator ${indicator_map[status] || 'blue blink'}`;
+		return indicator_class;
+	}
+
+	function setup_device() {
+		frappe.call( {
+			method: "twilio_integration.twilio_integration.api.generate_access_token",
+			callback: (data) => {
+				device = new Twilio.Device(data.message.token, {
+					codecPreferences: ["opus", "pcmu"],
+					fakeLocalDTMF: true,
+					enableRingingState: true,
+				});
+
+				device.on("ready", function (device) {
+					set_header('available');
+				});
+
+				device.on("error", function (error) {
+					set_header("failed");
+					device.disconnectAll();
+					// FIXME: log this error into console instead of popup
+					frappe.throw(__("Twilio Device Error: " + error.message));
+				});
+
+				device.on("disconnect", function (conn) {
+					dialog.set_secondary_action_label("Close")
+					dialog.enable_primary_action();
+					set_call_as_complete();
+					window.onbeforeunload = null;
+					set_header("available");
+					hide_mute_button();
+					update_call_log(conn);
+				});
+
+				device.on("connect", function (conn) {
+					setup_mute_button(conn);
+					dialog.set_secondary_action_label("Hang Up")
+					set_header("in-progress");
+					window.onbeforeunload = function() {
+						return "you can not refresh the page";
+					}
+				});
+
+				device.on("incoming", function (conn) {
+					console.log("Incoming connection from " + conn.parameters.From);
+					call_screen(conn);
+				});
+			}
+		});
+	}
+
+	function setup_mute_button(twilio_conn) {
+		var mute_button = dialog.buttons.find('.btn-mute');
+		mute_button.removeClass('hide');
+		mute_button.on('click', function (event) {
+			if (this.value == 'Mute') {
+				twilio_conn.mute(true);
+				this.value='Unmute';
+			}
+			else {
+				twilio_conn.mute(false);
+				this.value = 'Mute';
+			}
+		});
+	}
+
+	function hide_mute_button() {
+		var mute_button = dialog.buttons.find('.btn-mute');
+		mute_button.addClass('hide');
+	}
+
+	function update_call_log(conn, status="Completed") {
+		if (!conn.parameters.CallSid) return
+		frappe.call({
+			"method": "twilio_integration.twilio_integration.api.update_call_log",
+			"args": {
+				"call_sid": conn.parameters.CallSid,
+				"status": status
+			}
+		})
+	}
+
+	function set_call_as_complete() {
+		dialog.get_close_btn().show();
+	}
+
+	function call_screen(conn) {
+		dialog = new frappe.ui.Dialog({
+			'static': 1,
+			'title': __('Incoming Call'),
+			'minimizable': true,
+			primary_action: () => {
+				dialog.disable_primary_action();
+				conn.accept();
+			},
+			primary_action_label: __('Answer'),
+			secondary_action: () => {
+				if (device) {
+					device.disconnectAll();
+				}
+			}
+		});
+		dialog.show();
+		dialog.get_close_btn().show();
+	}
 }
 
 var script = document.createElement('script');
