@@ -6,11 +6,11 @@ var onload_script = function() {
 	if (frappe.boot.twilio_enabled){
 		frappe.run_serially([
 			() => setup_device(),
-			() => dialer()
+			() => dialer_screen()
 		]);
 	}
 
-	function dialer() {
+	function dialer_screen() {
 		frappe.phone_call.handler = (to_number, frm) => {
 			var to_numbers;
 			if (Array.isArray(to_number)) {
@@ -170,6 +170,7 @@ var onload_script = function() {
 	}
 
 	function call_screen(conn) {
+		// FIXME: Should we use some other name here?
 		dialog = new frappe.ui.Dialog({
 			'static': 1,
 			'title': __('Incoming Call'),
@@ -187,6 +188,7 @@ var onload_script = function() {
 		});
 		dialog.show();
 		dialog.get_close_btn().show();
+		$('<input type="button" class="btn btn-mute hide" value="Mute"/>').appendTo(dialog.buttons);
 	}
 }
 
