@@ -37,13 +37,11 @@ class Twilio:
 		numbers = self.twilio_client.incoming_phone_numbers.list()
 		return [n.phone_number for n in numbers]
 
-	def generate_voice_access_token(self, from_number: str, identity_postfix=None, ttl=60*60):
+	def generate_voice_access_token(self, from_number: str, identity: str, ttl=60*60):
 		"""Generates a token required to make voice calls from the browser.
 		"""
 		# identity is used by twilio to identify the user uniqueness at browser(or any endpoints).
-		identity = from_number
-		if identity_postfix:
-			identity = '_'.join([identity, self.safe_identity(identity_postfix)])
+		identity = self.safe_identity(identity)
 
 		# Create access token with credentials
 		token = AccessToken(self.account_sid, self.api_key, self.api_secret, identity=identity, ttl=ttl)
@@ -58,11 +56,11 @@ class Twilio:
 
 	@classmethod
 	def safe_identity(cls, identity: str):
-		"""Create a safe identity by replacing unsupported special charaters with '-'.
+		"""Create a safe identity by replacing unsupported special charaters `@` with (at)).
 		Twilio Client JS fails to make a call connection if identity has special characters like @, [, / etc)
 		https://www.twilio.com/docs/voice/client/errors (#31105)
 		"""
-		return re.sub(r'[^a-zA-Z0-9_.-]+', '-', identity).strip()
+		return identity.replace('@', '(at)')
 
 	def generate_twilio_dial_response(self, from_number: str, to_number: str):
 		"""Generates voice call instructions needed for twilio.

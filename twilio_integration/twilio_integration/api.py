@@ -23,7 +23,7 @@ def generate_access_token():
 			"detail": "Phone number is not mapped to the caller"
 		}
 
-	token=twilio.generate_voice_access_token(from_number=from_number, identity_postfix=frappe.session.user)
+	token=twilio.generate_voice_access_token(from_number=from_number, identity=frappe.session.user)
 	return {
 		'token': token.decode('utf-8')
 	}
@@ -32,8 +32,9 @@ def generate_access_token():
 def voice(**kwargs):
 	"""This is a webhook called by twilio to get instructions when the voice call request comes to twilio server.
 	"""
-	def _get_caller_number(user):
-		return user.replace('client:', '').split('_')[0]
+	def _get_caller_number(caller):
+		user = caller.replace('client:', '').split('_')[0]
+		return frappe.db.get_value('Voice Call Settings', user, 'twilio_number')
 
 	args = frappe._dict(kwargs)
 	twilio = Twilio.connect()
