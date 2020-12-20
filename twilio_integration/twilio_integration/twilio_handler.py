@@ -6,6 +6,7 @@ from twilio.jwt.access_token.grants import VoiceGrant
 from twilio.twiml.voice_response import VoiceResponse, Dial
 
 import frappe
+from frappe import _
 from .utils import get_public_url, merge_dicts
 
 class Twilio:
@@ -81,6 +82,14 @@ class Twilio:
 	def get_call_info(self, call_sid):
 		return self.twilio_client.calls(call_sid).fetch()
 
+	def generate_twilio_client_response(self, client, ring_tone='at'):
+		"""TODO: Record the call
+		"""
+		resp = VoiceResponse()
+		dial = Dial(ring_tone=ring_tone)
+		dial.client(client)
+		resp.append(dial)
+		return resp
 
 class IncomingCall:
 	def __init__(self, from_number, to_number, meta=None):
@@ -94,15 +103,27 @@ class IncomingCall:
 		* Check call attender settings and forward the call to Phone
 		"""
 		twilio = Twilio.connect()
-
 		owners = get_twilio_number_owners(self.to_number)
 		attender = get_the_call_attender(owners)
-		# if attender.voice_call_settings.call_receiving_device == 'Phone':
-		# 	return twilio.generate_twilio_dial_response(from_number, attender.phone_number)
-		return twilio.generate_twilio_dial_response(self.from_number, attender['mobile_no'])
+		attender = None
+
+		if not attender:
+			resp = VoiceResponse()
+			resp.say(_('Agent is unavailable to take the call, please call after some time.'))
+			return resp
+
+		if attender['call_receiving_device'] == 'Phone':
+			return twilio.generate_twilio_dial_response(self.from_number, attender['mobile_no'])
+		else:
+			return twilio.generate_twilio_client_response(twilio.safe_identity(attender['name']))
 
 def get_twilio_number_owners(phone_number):
-	"""Get list of users who is using the phhone_number.
+	"""Get list of users who is using the phone_number.
+	>>> get_twilio_number_owners('+11234567890')
+	{
+		'owner1': {'name': '..', 'mobile_no': '..', 'call_receiving_device': '...'},
+		'owner2': {....}
+	}
 	"""
 	user_voice_settings = frappe.get_all(
 		'Voice Call Settings',
@@ -120,10 +141,23 @@ def get_twilio_number_owners(phone_number):
 
 	return merge_dicts(user_wise_general_settings, user_wise_voice_settings)
 
+
+def get_active_loggedin_users(users):
+	"""Filter the current loggedin users from the given users list
+	"""
+	rows = frappe.db.sql("""
+		SELECT `user`
+		FROM `tabSessions`
+		WHERE `user` IN (%s)
+		""", (users))
+	return [row[0] for row in set(rows)]
+
 def get_the_call_attender(owners):
 	"""Get attender details from list of owners
 	"""
 	if not owners: return
+	current_loggedin_users = get_active_loggedin_users(list(owners.keys()))
 	for name, details in owners.items():
-		if details['mobile_no']:
+		if ((details['call_receiving_device'] == 'Phone' and details['mobile_no']) or
+			(details['call_receiving_device'] == 'Computer' and name in current_loggedin_users)):
 			return details
