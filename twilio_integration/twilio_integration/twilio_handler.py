@@ -105,7 +105,6 @@ class IncomingCall:
 		twilio = Twilio.connect()
 		owners = get_twilio_number_owners(self.to_number)
 		attender = get_the_call_attender(owners)
-		attender = None
 
 		if not attender:
 			resp = VoiceResponse()
