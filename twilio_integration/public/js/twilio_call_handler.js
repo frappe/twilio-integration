@@ -115,6 +115,9 @@ var onload_script = function() {
 					set_header("available");
 					hide_mute_button();
 					update_call_log(conn);
+					if (conn.direction == 'INCOMING'){
+						dialog.cancel();
+					}
 				});
 
 				device.on("connect", function (conn) {
@@ -169,26 +172,52 @@ var onload_script = function() {
 		dialog.get_close_btn().show();
 	}
 
+	function set_dialog_body(caller_details) {
+		var caller_info = $(`<div></div>`);
+		let caller_details_html = '';
+		if (caller_details) {
+			for (const [key, value] of Object.entries(caller_details)) {
+				caller_details_html += `<div>${key}: ${value}</div>`;
+			}
+			$(`<div>${caller_details_html}</div>`).appendTo(dialog.modal_body);
+		}
+	}
+
 	function call_screen(conn) {
-		// FIXME: Should we use some other name here?
-		dialog = new frappe.ui.Dialog({
-			'static': 1,
-			'title': __('Incoming Call'),
-			'minimizable': true,
-			primary_action: () => {
-				dialog.disable_primary_action();
-				conn.accept();
+		frappe.call({
+			type: "GET",
+			method: "twilio_integration.twilio_integration.api.get_contact_details",
+			args: {
+				'phone': conn.parameters.From
 			},
-			primary_action_label: __('Answer'),
-			secondary_action: () => {
-				if (device) {
-					device.disconnectAll();
+			callback: (data) => {
+				var title;
+				if (data.message){
+					title = __('Incoming Call From {0}', [data.message.first_name])
+				} else {
+					title = "Incoming Call"
 				}
+				dialog = new frappe.ui.Dialog({
+					'static': 1,
+					'title': title,
+					'minimizable': true,
+					primary_action: () => {
+						dialog.disable_primary_action();
+						conn.accept();
+					},
+					primary_action_label: __('Answer'),
+					secondary_action: () => {
+						if (device) {
+							device.disconnectAll();
+						}
+					}
+				});
+				set_dialog_body(data.message);
+				dialog.show();
+				dialog.get_close_btn().show();
+				$('<input type="button" class="btn btn-mute hide" value="Mute"/>').appendTo(dialog.buttons);
 			}
 		});
-		dialog.show();
-		dialog.get_close_btn().show();
-		$('<input type="button" class="btn btn-mute hide" value="Mute"/>').appendTo(dialog.buttons);
 	}
 }
 

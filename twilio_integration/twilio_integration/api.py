@@ -1,5 +1,7 @@
 from werkzeug.wrappers import Response
+
 import frappe
+from frappe.contacts.doctype.contact.contact import get_contact_with_phone_number
 from .twilio_handler import Twilio, IncomingCall
 
 @frappe.whitelist()
@@ -102,3 +104,16 @@ def update_recording_info(**kwargs):
 		frappe.db.set_value("Call Log", call_sid, "recording_url", recording_url)
 	except:
 		frappe.log_error(title=_("Failed to capture Twilio recording"))
+
+@frappe.whitelist()
+def get_contact_details(phone):
+	"""Get information about existing contact in the system.
+	"""
+	contact = get_contact_with_phone_number(phone.strip())
+	if not contact: return
+	contact_doc = frappe.get_doc('Contact', contact)
+	return contact_doc and {
+		'first_name': contact_doc.first_name.title(),
+		'email_id': contact_doc.email_id,
+		'phone': contact_doc.phone
+	}
