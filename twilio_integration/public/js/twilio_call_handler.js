@@ -54,12 +54,23 @@ var onload_script = function() {
 					if (device) {
 						device.disconnectAll();
 					}
+				},
+				onhide: () => {
+					if (device) {
+						device.disconnectAll();
+						device.destroy();
+					}
 				}
 			});
-			$('<input type="button" class="btn btn-mute hide" value="Mute"/>').appendTo(dialog.buttons);
+			dialog.add_custom_action('Mute', null, 'btn-mute hide');
+			dialog.get_secondary_btn().addClass('hide');
 			dialog.show();
 			dialog.get_close_btn().show();
 		}
+	}
+
+	function hide_hangup_button() {
+		dialog.get_secondary_btn().addClass('hide')
 	}
 
 	function set_header(status){
@@ -108,12 +119,12 @@ var onload_script = function() {
 				});
 
 				device.on("disconnect", function (conn) {
-					dialog.set_secondary_action_label("Close")
 					dialog.enable_primary_action();
 					set_call_as_complete();
 					window.onbeforeunload = null;
 					set_header("available");
 					hide_mute_button();
+					hide_hangup_button();
 					update_call_log(conn);
 					if (conn.direction == 'INCOMING'){
 						dialog.cancel();
@@ -138,22 +149,22 @@ var onload_script = function() {
 	}
 
 	function setup_mute_button(twilio_conn) {
-		var mute_button = dialog.buttons.find('.btn-mute');
+		var mute_button = dialog.custom_actions.find('.btn-mute');
 		mute_button.removeClass('hide');
 		mute_button.on('click', function (event) {
-			if (this.value == 'Mute') {
+			if ($(this).text().trim() == 'Mute') {
 				twilio_conn.mute(true);
-				this.value='Unmute';
+				$(this).html('Unmute');
 			}
 			else {
 				twilio_conn.mute(false);
-				this.value = 'Mute';
+				$(this).html('Mute');
 			}
 		});
 	}
 
 	function hide_mute_button() {
-		var mute_button = dialog.buttons.find('.btn-mute');
+		var mute_button = dialog.custom_actions.find('.btn-mute');
 		mute_button.addClass('hide');
 	}
 
@@ -175,6 +186,7 @@ var onload_script = function() {
 	function set_dialog_body(caller_details) {
 		var caller_info = $(`<div></div>`);
 		let caller_details_html = '';
+		debugger;
 		if (caller_details) {
 			for (const [key, value] of Object.entries(caller_details)) {
 				caller_details_html += `<div>${key}: ${value}</div>`;
@@ -210,12 +222,19 @@ var onload_script = function() {
 						if (device) {
 							device.disconnectAll();
 						}
+					},
+					onhide: () => {
+						if (device) {
+							device.disconnectAll();
+							device.destroy();
+						}
 					}
 				});
 				set_dialog_body(data.message);
 				dialog.show();
 				dialog.get_close_btn().show();
-				$('<input type="button" class="btn btn-mute hide" value="Mute"/>').appendTo(dialog.buttons);
+				dialog.add_custom_action('Mute', null, 'btn-mute hide');
+				dialog.get_secondary_btn().addClass('hide');
 			}
 		});
 	}
