@@ -112,8 +112,4 @@ def get_contact_details(phone):
 	contact = get_contact_with_phone_number(phone.strip())
 	if not contact: return
 	contact_doc = frappe.get_doc('Contact', contact)
-	return contact_doc and {
-		'first_name': contact_doc.first_name.title(),
-		'email_id': contact_doc.email_id,
-		'phone': contact_doc.phone
-	}
+	return contact_doc.as_dict()
