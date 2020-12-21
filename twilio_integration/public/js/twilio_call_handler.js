@@ -114,8 +114,7 @@ var onload_script = function() {
 				device.on("error", function (error) {
 					set_header("failed");
 					device.disconnectAll();
-					// FIXME: log this error into console instead of popup
-					frappe.throw(__("Twilio Device Error: " + error.message));
+					console.log("Twilio Device Error:" + error.message);
 				});
 
 				device.on("disconnect", function (conn) {

@@ -63,16 +63,18 @@ class Twilio:
 		"""
 		return identity.replace('@', '(at)')
 
-	def generate_twilio_dial_response(self, from_number: str, to_number: str):
-		"""Generates voice call instructions needed for twilio.
-		"""
+	def get_recording_status_callback_url(self):
 		url_path = "/api/method/twilio_integration.twilio_integration.api.update_recording_info"
-		recording_status_callback = get_public_url(url_path)
+		return get_public_url(url_path)
+
+	def generate_twilio_dial_response(self, from_number: str, to_number: str):
+		"""Generates voice call instructions to forward the call to agents Phone.
+		"""
 		resp = VoiceResponse()
 		dial = Dial(
 			caller_id=from_number,
 			record=self.settings.record_calls,
-			recording_status_callback=recording_status_callback,
+			recording_status_callback=self.get_recording_status_callback_url(),
 			recording_status_callback_event='completed'
 		)
 		dial.number(to_number)
@@ -83,10 +85,15 @@ class Twilio:
 		return self.twilio_client.calls(call_sid).fetch()
 
 	def generate_twilio_client_response(self, client, ring_tone='at'):
-		"""TODO: Record the call
+		"""Generates voice call instructions to forward the call to agents computer.
 		"""
 		resp = VoiceResponse()
-		dial = Dial(ring_tone=ring_tone)
+		dial = Dial(
+			ring_tone=ring_tone,
+			record=self.settings.record_calls,
+			recording_status_callback=self.get_recording_status_callback_url(),
+			recording_status_callback_event='completed'
+		)
 		dial.client(client)
 		resp.append(dial)
 		return resp
