@@ -35,7 +35,8 @@ def voice(**kwargs):
 	"""This is a webhook called by twilio to get instructions when the voice call request comes to twilio server.
 	"""
 	def _get_caller_number(caller):
-		user = caller.replace('client:', '').split('_')[0]
+		identity = caller.lower().replace('client:', '').strip()
+		user = Twilio.emailid_from_identity(identity)
 		return frappe.db.get_value('Voice Call Settings', user, 'twilio_number')
 
 	args = frappe._dict(kwargs)
@@ -51,7 +52,6 @@ def voice(**kwargs):
 	args.to_number = args.To
 	resp = twilio.generate_twilio_dial_response(args.from_number, args.to_number)
 	create_call_log(args)
-
 	return Response(resp.to_xml(), mimetype='text/xml')
 
 @frappe.whitelist(allow_guest=True)
