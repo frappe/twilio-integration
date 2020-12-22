@@ -63,6 +63,12 @@ class Twilio:
 		"""
 		return identity.replace('@', '(at)')
 
+	@classmethod
+	def emailid_from_identity(cls, identity: str):
+		"""Convert safe identity string into emailID.
+		"""
+		return identity.replace('(at)', '@')
+
 	def get_recording_status_callback_url(self):
 		url_path = "/api/method/twilio_integration.twilio_integration.api.update_recording_info"
 		return get_public_url(url_path)
