@@ -24,6 +24,11 @@ class TwilioSettings(Document):
 		self.validate_twilio_account()
 
 	def on_update(self):
+		# Single doctype records are created in DB at time of installation and those field values are set as null.
+		# This condition make sure that we handle null.
+		if not self.account_sid:
+			return
+
 		twilio = Client(self.account_sid, self.get_password("auth_token"))
 		self.set_api_credentials(twilio)
 		self.set_application_credentials(twilio)
