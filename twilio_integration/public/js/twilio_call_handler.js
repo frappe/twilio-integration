@@ -280,7 +280,8 @@ class IncomingCallPopup extends TwilioCallPopup {
 			secondary_action: () => {
 				if (this.twilio_device) {
 					if (this.conn.status() == 'pending') {
-						this.conn.ignore();
+						this.conn.reject();
+						this.close();
 					}
 					this.twilio_device.disconnectAll();
 				}
@@ -289,7 +290,8 @@ class IncomingCallPopup extends TwilioCallPopup {
 			onhide: () => {
 				if (this.twilio_device) {
 					if (this.conn.status() == 'pending') {
-						this.conn.ignore();
+						this.conn.reject();
+						this.close();
 					}
 					this.twilio_device.disconnectAll();
 				}
