@@ -129,6 +129,39 @@ class IncomingCall:
 		else:
 			return twilio.generate_twilio_client_response(twilio.safe_identity(attender['name']))
 
+class TwilioCallDetails:
+	def __init__(self, call_info, call_from = None, call_to = None):
+		self.call_info = call_info
+		self.account_sid = call_info.get('AccountSid')
+		self.application_sid = call_info.get('ApplicationSid')
+		self.call_sid = call_info.get('CallSid')
+		self.call_status = call_info.get('CallStatus').title()
+		self._call_from = call_from
+		self._call_to = call_to
+
+	def get_direction(self):
+		"""TODO: Check why Twilio gives always Direction as `inbound`?
+		"""
+		if self.call_info.get('Caller').lower().startswith('client'):
+			return 'Outbound'
+		return 'Inbound'
+
+	def get_from_number(self):
+		return self._call_from or self.call_info.get('From')
+
+	def get_to_number(self):
+		return self._call_to or self.call_info.get('To')
+
+	def to_dict(self):
+		return {
+			'direction': self.get_direction(),
+			'status': self.call_status,
+			'id': self.call_sid,
+			'from': self.get_from_number(),
+			'to': self.get_to_number()
+		}
+
+
 def get_twilio_number_owners(phone_number):
 	"""Get list of users who is using the phone_number.
 	>>> get_twilio_number_owners('+11234567890')
@@ -160,8 +193,8 @@ def get_active_loggedin_users(users):
 	rows = frappe.db.sql("""
 		SELECT `user`
 		FROM `tabSessions`
-		WHERE `user` IN (%s)
-		""", (users))
+		WHERE `user` IN %(users)s
+		""", {'users': users})
 	return [row[0] for row in set(rows)]
 
 def get_the_call_attender(owners):

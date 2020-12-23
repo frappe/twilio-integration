@@ -2,7 +2,7 @@ from werkzeug.wrappers import Response
 
 import frappe
 from frappe.contacts.doctype.contact.contact import get_contact_with_phone_number
-from .twilio_handler import Twilio, IncomingCall
+from .twilio_handler import Twilio, IncomingCall, TwilioCallDetails
 
 @frappe.whitelist()
 def get_twilio_phone_numbers():
@@ -35,7 +35,7 @@ def voice(**kwargs):
 	"""This is a webhook called by twilio to get instructions when the voice call request comes to twilio server.
 	"""
 	def _get_caller_number(caller):
-		identity = caller.lower().replace('client:', '').strip()
+		identity = caller.replace('client:', '').strip()
 		user = Twilio.emailid_from_identity(identity)
 		return frappe.db.get_value('Voice Call Settings', user, 'twilio_number')
 
@@ -48,36 +48,29 @@ def voice(**kwargs):
 	assert args.ApplicationSid == twilio.application_sid
 
 	# Generate TwiML instructions to make a call
-	args.from_number = _get_caller_number(args.Caller)
-	args.to_number = args.To
-	resp = twilio.generate_twilio_dial_response(args.from_number, args.to_number)
-	create_call_log(args)
+	from_number = _get_caller_number(args.Caller)
+	resp = twilio.generate_twilio_dial_response(from_number, args.To)
+
+	call_details = TwilioCallDetails(args, call_from=from_number)
+	create_call_log(call_details)
 	return Response(resp.to_xml(), mimetype='text/xml')
 
 @frappe.whitelist(allow_guest=True)
 def twilio_incoming_call_handler(**kwargs):
 	args = frappe._dict(kwargs)
-	args.from_number = args.From
-	args.to_number = args.To
-	create_call_log(args)
+	call_details = TwilioCallDetails(args)
+	create_call_log(call_details)
 
-	resp = IncomingCall(args.from_number, args.to_number).process()
+	resp = IncomingCall(args.From, args.To).process()
 	return Response(resp.to_xml(), mimetype='text/xml')
 
 @frappe.whitelist()
-def create_call_log(call_payload):
-	is_outbound = call_payload.get('Caller', '').lower().startswith('client')
-	direction = (is_outbound and 'Outbound') or 'Inbound'
-
-	call_log = frappe.get_doc({
-		"doctype": "Call Log",
-		"direction": direction,
-		"status": call_payload.get('CallStatus', '').title(),
-		"id": call_payload.get("CallSid"),
-		"to": call_payload.get("to_number"),
-		"medium": call_payload.get("from_number"),
-		"from": call_payload.get("from_number"),
+def create_call_log(call_details: TwilioCallDetails):
+	call_log = frappe.get_doc({**call_details.to_dict(),
+		'doctype': 'Call Log',
+		'medium': 'Twilio'
 	})
+
 	call_log.flags.ignore_permissions = True
 	call_log.save()
 
