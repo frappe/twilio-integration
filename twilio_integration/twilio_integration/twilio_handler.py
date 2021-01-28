@@ -135,7 +135,7 @@ class TwilioCallDetails:
 		self.account_sid = call_info.get('AccountSid')
 		self.application_sid = call_info.get('ApplicationSid')
 		self.call_sid = call_info.get('CallSid')
-		self.call_status = call_info.get('CallStatus').title()
+		self.call_status = self.get_call_status(call_info.get('CallStatus'))
 		self._call_from = call_from
 		self._call_to = call_to
 
@@ -143,8 +143,8 @@ class TwilioCallDetails:
 		"""TODO: Check why Twilio gives always Direction as `inbound`?
 		"""
 		if self.call_info.get('Caller').lower().startswith('client'):
-			return 'Outbound'
-		return 'Inbound'
+			return 'Outgoing'
+		return 'Incoming'
 
 	def get_from_number(self):
 		return self._call_from or self.call_info.get('From')
@@ -152,9 +152,16 @@ class TwilioCallDetails:
 	def get_to_number(self):
 		return self._call_to or self.call_info.get('To')
 
+	@classmethod
+	def get_call_status(cls, twilio_status):
+		"""Convert Twilio given status into system status.
+		"""
+		twilio_status = twilio_status or ''
+		return ' '.join(twilio_status.split('-')).title()
+
 	def to_dict(self):
 		return {
-			'direction': self.get_direction(),
+			'type': self.get_direction(),
 			'status': self.call_status,
 			'id': self.call_sid,
 			'from': self.get_from_number(),

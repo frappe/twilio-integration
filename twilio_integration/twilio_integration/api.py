@@ -1,6 +1,7 @@
 from werkzeug.wrappers import Response
 
 import frappe
+from frappe import _
 from frappe.contacts.doctype.contact.contact import get_contact_with_phone_number
 from .twilio_handler import Twilio, IncomingCall, TwilioCallDetails
 
@@ -84,7 +85,7 @@ def update_call_log(call_sid, status=None):
 
 	call_details = twilio.get_call_info(call_sid)
 	call_log = frappe.get_doc("Call Log", call_sid)
-	call_log.status = status or call_details.CallStatus.title()
+	call_log.status = status or TwilioCallDetails.get_call_status(call_details.status)
 	call_log.duration = call_details.duration
 	call_log.flags.ignore_permissions = True
 	call_log.save()
@@ -96,6 +97,7 @@ def update_recording_info(**kwargs):
 		args = frappe._dict(kwargs)
 		recording_url = args.RecordingUrl
 		call_sid = args.CallSid
+		update_call_log(call_sid)
 		frappe.db.set_value("Call Log", call_sid, "recording_url", recording_url)
 	except:
 		frappe.log_error(title=_("Failed to capture Twilio recording"))
