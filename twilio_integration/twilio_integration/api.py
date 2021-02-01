@@ -73,6 +73,7 @@ def create_call_log(call_details: TwilioCallDetails):
 
 	call_log.flags.ignore_permissions = True
 	call_log.save()
+	frappe.db.commit()
 
 @frappe.whitelist()
 def update_call_log(call_sid, status=None):
@@ -87,6 +88,7 @@ def update_call_log(call_sid, status=None):
 	call_log.duration = call_details.duration
 	call_log.flags.ignore_permissions = True
 	call_log.save()
+	frappe.db.commit()
 
 @frappe.whitelist(allow_guest=True)
 def update_recording_info(**kwargs):
