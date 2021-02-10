@@ -69,10 +69,9 @@ var onload_script = function() {
 					}
 					popup.setup_dial_icon();
 					popup.setup_dialpad(conn);
-					window.onkeydown = (e) => {
-						const key = String.fromCharCode(e.keyCode);
-						if (["0","1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#", "w"].includes(key)) {
-							e.preventDefault();
+					document.onkeydown = (e) => {
+						const key = e.key;
+						if (conn.status() == 'open' && ["0","1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#", "w"].includes(key)) {
 							conn.sendDigits(key);
 							popup.update_to_number(key);
 						}
