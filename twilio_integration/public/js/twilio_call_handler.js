@@ -45,6 +45,8 @@ var onload_script = function() {
 					popup.set_header("available");
 					popup.hide_mute_button();
 					popup.hide_hangup_button();
+					popup.hide_dial_icon();
+					popup.hide_dialpad();
 					// Make sure that dialog is closed when incoming call is disconnected.
 					if (conn.direction == 'INCOMING'){
 						popup.close();
@@ -65,12 +67,22 @@ var onload_script = function() {
 					window.onbeforeunload = function() {
 						return "you can not refresh the page";
 					}
+					popup.setup_dial_icon();
+					popup.setup_dialpad(conn);
+					document.onkeydown = (e) => {
+						let key = e.key;
+						if (conn.status() == 'open' && ["0","1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#", "w"].includes(key)) {
+							conn.sendDigits(key);
+							popup.update_dialpad_input(key);
+						}
+					};
 				});
 
 				device.on("incoming", function (conn) {
 					console.log("Incoming connection from " + conn.parameters.From);
 					call_screen(conn);
 				});
+
 			}
 		});
 	}
@@ -178,6 +190,62 @@ class TwilioCallPopup {
 		this.dialog.cancel();
 	}
 
+	setup_dialpad(conn) {
+		let me = this;
+		this.dialpad = new DialPad({
+			twilio_device: this.twilio_device,
+			wrapper: me.dialog.$wrapper.find('.dialpad-section'),
+			events: {
+				dialpad_event: function($btn) {
+					const button_value = $btn.attr('data-button-value');
+					conn.sendDigits(button_value);
+					me.update_dialpad_input(button_value);
+				}
+			},
+			cols: 5,
+			keys: [
+				[ 1, 2, 3 ],
+				[ 4, 5, 6 ],
+				[ 7, 8, 9 ],
+				[ '*', 0, '#' ]
+			]
+		})
+	}
+
+	update_dialpad_input(key) {
+		let dialpad_input = this.dialog.$wrapper.find('.dialpad-input')[0];
+		dialpad_input.value += key;
+	}
+
+	setup_dial_icon() {
+		let me = this;
+		let dialpad_icon = this.dialog.$wrapper.find('.dialpad-icon');
+		dialpad_icon.removeClass('hide');
+		dialpad_icon.on('click', function (event) {
+			let dialpad_section = me.dialog.$wrapper.find('.dialpad-section');
+			if(dialpad_section.hasClass('hide')) {
+				me.show_dialpad();
+			}
+			else {
+				me.hide_dialpad();
+			}
+		});
+	}
+
+	hide_dial_icon() {
+		let dial_icon = this.dialog.$wrapper.find('.dialpad-icon');
+		dial_icon.addClass('hide');
+	}
+
+	show_dialpad() {
+		let dialpad_section = this.dialog.$wrapper.find('.dialpad-section');
+		dialpad_section.removeClass('hide');
+	}
+
+	hide_dialpad() {
+		let dialpad_section = this.dialog.$wrapper.find('.dialpad-section');
+		dialpad_section.addClass('hide');
+	}
 }
 
 class OutgoingCallPopup extends TwilioCallPopup {
@@ -191,18 +259,21 @@ class OutgoingCallPopup extends TwilioCallPopup {
 			'static': 1,
 			'title': __('Make a Call'),
 			'minimizable': true,
-			'fields': [{
-				'fieldname': 'to_number',
-				'label': 'To Number',
-				'fieldtype': 'Autocomplete',
-				'ignore_validation': true,
-				'options': this.phone_numbers,
-				'default': this.phone_numbers[0],
-				'read_only': 0,
-				'reqd': 1
-			}],
+			'fields': [
+				{
+					'fieldname': 'to_number',
+					'label': 'To Number',
+					'fieldtype': 'Data',
+					'ignore_validation': true,
+					'options': this.phone_numbers,
+					'default': this.phone_numbers[0],
+					'read_only': 0,
+					'reqd': 1
+				}
+			],
 			primary_action: () => {
 				this.dialog.disable_primary_action();
+
 				var params = {
 					To: this.dialog.get_value('to_number')
 				};
@@ -230,7 +301,17 @@ class OutgoingCallPopup extends TwilioCallPopup {
 				}
 			}
 		});
-		this.dialog.add_custom_action('Mute', null, 'btn-mute hide');
+		let to_number = this.dialog.$wrapper.find('[data-fieldname="to_number"]').find('[type="text"]');
+
+		$(`<span class="dialpad-icon hide">
+			<a class="btn-open no-decoration" title="${__('Dialpad')}">
+				${frappe.utils.icon('dialpad')}
+		</span>`).insertAfter(to_number);
+
+		$(`<div class="dialpad-section hide"></div>`)
+		.insertAfter(this.dialog.$wrapper.find('.modal-content'));
+
+		this.dialog.add_custom_action('Mute', null, 'btn-mute mr-2 hide');
 		this.dialog.get_secondary_btn().addClass('hide');
 		this.dialog.show();
 		this.dialog.get_close_btn().show();
@@ -301,6 +382,59 @@ class IncomingCallPopup extends TwilioCallPopup {
 		this.show_close_button();
 		this.dialog.add_custom_action('Mute', null, 'btn-mute hide');
 		this.dialog.show();
+	}
+}
+
+class DialPad extends OutgoingCallPopup {
+	constructor({ twilio_device, wrapper, events, cols, keys, css_classes, fieldnames_map }) {
+		super(twilio_device);
+		this.wrapper = wrapper;
+		this.events = events;
+		this.cols = cols;
+		this.keys = keys;
+		this.css_classes = css_classes || [];
+		this.fieldnames = fieldnames_map || {};
+
+		this.init_component();
+	}
+
+	init_component() {
+		this.prepare_dom();
+		this.bind_events();
+	}
+
+	prepare_dom() {
+		const { cols, keys, css_classes, fieldnames } = this;
+
+		function get_keys() {
+			return keys.reduce((a, row, i) => {
+				return a + row.reduce((a2, number, j) => {
+					const class_to_append = css_classes && css_classes[i] ? css_classes[i][j] : '';
+					const fieldname = fieldnames && fieldnames[number] ?
+						fieldnames[number] : typeof number === 'string' ? frappe.scrub(number) : number;
+
+					return a2 + `<div class="dialpad-btn ${class_to_append}" data-button-value="${fieldname}">${number}</div>`;
+				}, '');
+			}, '');
+		}
+
+		this.wrapper.html(
+			`<i class="dialpad--pointer"></i>
+			<div class="dialpad-container">
+				<input class="dialpad-input form-control" readonly="true">
+				<div class="dialpad-keys">
+					${get_keys()}
+				</div>
+			</div>`
+		)
+	}
+
+	bind_events() {
+		const me = this;
+		this.wrapper.on('click', '.dialpad-btn', function() {
+			const $btn = $(this);
+			me.events.dialpad_event($btn);
+		});
 	}
 }
 

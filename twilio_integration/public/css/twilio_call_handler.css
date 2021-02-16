@@ -1,0 +1,67 @@
+.dialpad-section {
+	flex: 1;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	border-radius: var(--border-radius);
+	pointer-events: all;
+	position: absolute;
+	top: 140px;
+	right: 23px;
+	z-index: 2000;
+	border: 1px solid var(--gray-300);
+	box-shadow: var(--shadow-base);
+	background-color: white;
+}
+
+.dialpad-section .dialpad-container {
+	padding: var(--padding-sm);
+}
+
+.dialpad-section .dialpad-container .dialpad-keys {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.dialpad-section .dialpad-container .dialpad-input {
+	border-radius: var(--border-radius);
+	background-color: var(--control-bg);
+	text-align: center !important;
+	height: calc(1.5em + 1rem + 1px);
+	margin-bottom: var(--margin-sm);
+	cursor: text;
+}
+
+.dialpad-section .dialpad-container .dialpad-keys .dialpad-btn {
+	cursor: pointer;
+	border-radius: var(--border-radius-md);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--padding-md) var(--padding-lg);
+	background-color: white;
+}
+
+.dialpad-section .dialpad-container .dialpad-keys .dialpad-btn:hover {
+	background-color: var(--control-bg);
+}
+
+.dialpad-icon {
+	position: absolute;
+	top: 4px;
+	right: 8px;
+	padding: 3px;
+}
+
+.dialpad--pointer {
+	position: absolute;
+	background: white;
+	border-top: 1px solid var(--gray-300);
+	border-right: 1px solid var(--gray-300);
+	width: 10px;
+	height: 10px;
+	z-index: 2001;
+	top: -6px;
+	right: 11px;
+	transform: rotate(315deg);
+}
