@@ -45,8 +45,8 @@ var onload_script = function() {
 					popup.set_header("available");
 					popup.hide_mute_button();
 					popup.hide_hangup_button();
-					popup.hide_dial_button();
-					popup.hide_dialpad(popup.dialog.$wrapper.find('.form-column'))
+					popup.hide_dial_icon();
+					popup.hide_dialpad();
 					// Make sure that dialog is closed when incoming call is disconnected.
 					if (conn.direction == 'INCOMING'){
 						popup.close();
@@ -70,10 +70,10 @@ var onload_script = function() {
 					popup.setup_dial_icon();
 					popup.setup_dialpad(conn);
 					document.onkeydown = (e) => {
-						const key = e.key;
+						let key = e.key;
 						if (conn.status() == 'open' && ["0","1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#", "w"].includes(key)) {
 							conn.sendDigits(key);
-							popup.update_to_number(key);
+							popup.update_dialpad_input(key);
 						}
 					};
 				});
@@ -82,6 +82,7 @@ var onload_script = function() {
 					console.log("Incoming connection from " + conn.parameters.From);
 					call_screen(conn);
 				});
+
 			}
 		});
 	}
@@ -189,7 +190,7 @@ class TwilioCallPopup {
 		this.dialog.cancel();
 	}
 
-	setup_dialpad(twilio_conn) {
+	setup_dialpad(conn) {
 		let me = this;
 		this.dialpad = new DialPad({
 			twilio_device: this.twilio_device,
@@ -197,8 +198,8 @@ class TwilioCallPopup {
 			events: {
 				dialpad_event: function($btn) {
 					const button_value = $btn.attr('data-button-value');
-					twilio_conn.sendDigits(button_value);
-					me.update_to_number(button_value);
+					conn.sendDigits(button_value);
+					me.update_dialpad_input(button_value);
 				}
 			},
 			cols: 5,
@@ -211,41 +212,40 @@ class TwilioCallPopup {
 		})
 	}
 
-	update_to_number(key) {
-		let number = this.dialog.get_value('to_number');
-		this.dialog.set_value('to_number', number+key);
+	update_dialpad_input(key) {
+		let dialpad_input = this.dialog.$wrapper.find('.dialpad-input')[0];
+		dialpad_input.value += key;
 	}
 
 	setup_dial_icon() {
 		let me = this;
-		let dial_icon = me.dialog.$wrapper.find('.btn-dialpad');
-		dial_icon.removeClass('hide');
-		dial_icon.on('click', function (event) {
-			let $columns = me.dialog.$wrapper.find('.form-column')
-			if($columns[0].className == 'form-column col-sm-12'){
-				me.show_dialpad($columns);
+		let dialpad_icon = this.dialog.$wrapper.find('.dialpad-icon');
+		dialpad_icon.removeClass('hide');
+		dialpad_icon.on('click', function (event) {
+			let dialpad_section = me.dialog.$wrapper.find('.dialpad-section');
+			if(dialpad_section.hasClass('hide')) {
+				me.show_dialpad();
 			}
-			else{
-				me.hide_dialpad($columns);
+			else {
+				me.hide_dialpad();
 			}
 		});
 	}
 
-	hide_dial_button() {
-		let dial_icon = this.dialog.$wrapper.find('.btn-dialpad');
+	hide_dial_icon() {
+		let dial_icon = this.dialog.$wrapper.find('.dialpad-icon');
 		dial_icon.addClass('hide');
 	}
 
-	show_dialpad(column) {
-		column[0].className = 'form-column col-sm-6'
-		column[1].className = 'form-column col-sm-6'
+	show_dialpad() {
+		let dialpad_section = this.dialog.$wrapper.find('.dialpad-section');
+		dialpad_section.removeClass('hide');
 	}
 
-	hide_dialpad(column) {
-		column[0].className = 'form-column col-sm-12'
-		column[1].className = 'form-column col-sm-6 hide'
+	hide_dialpad() {
+		let dialpad_section = this.dialog.$wrapper.find('.dialpad-section');
+		dialpad_section.addClass('hide');
 	}
-
 }
 
 class OutgoingCallPopup extends TwilioCallPopup {
@@ -263,25 +263,17 @@ class OutgoingCallPopup extends TwilioCallPopup {
 				{
 					'fieldname': 'to_number',
 					'label': 'To Number',
-					'fieldtype': 'Autocomplete',
+					'fieldtype': 'Data',
 					'ignore_validation': true,
 					'options': this.phone_numbers,
 					'default': this.phone_numbers[0],
 					'read_only': 0,
 					'reqd': 1
-				},
-				{
-					"fieldname": "col_break",
-					"fieldtype": "Column Break",
-				},
-				{
-					'fieldname': 'dialpad',
-					'label': 'Dialpad',
-					'fieldtype': 'Data'
 				}
 			],
 			primary_action: () => {
 				this.dialog.disable_primary_action();
+
 				var params = {
 					To: this.dialog.get_value('to_number')
 				};
@@ -309,51 +301,20 @@ class OutgoingCallPopup extends TwilioCallPopup {
 				}
 			}
 		});
-		const dailpad_icon = `<span class="dialpad-icon">
-								<a class="btn-open no-decoration" title="${__('Dialpad')}">
-									${frappe.utils.icon('dialpad')}
-							</span>`;
+		let to_number = this.dialog.$wrapper.find('[data-fieldname="to_number"]').find('[type="text"]');
+
+		$(`<span class="dialpad-icon hide">
+			<a class="btn-open no-decoration" title="${__('Dialpad')}">
+				${frappe.utils.icon('dialpad')}
+		</span>`).insertAfter(to_number);
+
+		$(`<div class="dialpad-section hide"></div>`)
+		.insertAfter(this.dialog.$wrapper.find('.modal-content'));
+
 		this.dialog.add_custom_action('Mute', null, 'btn-mute mr-2 hide');
-		this.dialog.add_custom_action(dailpad_icon, null, 'btn-dialpad hide');
-		this.dialog.add_custom_action('Mute', null, 'btn-mute hide');
 		this.dialog.get_secondary_btn().addClass('hide');
 		this.dialog.show();
 		this.dialog.get_close_btn().show();
-		this.hide_dialpad(this.dialog.$wrapper.find('.form-column'));
-		this.dialog.$wrapper.find('[data-fieldname="dialpad"]')
-		.find('.control-input')
-		.replaceWith(
-			`<div class="dialpad-section"></div>
-			<style>
-			.dialpad-section {
-				flex: 1;
-				display: flex;
-				justify-content: center;
-				align-items: center;
-				padding: var(--padding-md);
-				background-color: var(--control-bg);
-				border-radius: var(--border-radius);
-			}
-
-			.dialpad-section .dialpad-container {
-				display: grid;
-				grid-template-columns: repeat(3, minmax(0, 1fr));
-				gap: var(--margin-md);
-				margin-bottom: var(--margin-md);
-			}
-			
-			.dialpad-section .dialpad-container .dialpad-btn {
-				cursor: pointer;
-				border-radius: var(--border-radius-md);
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				padding: var(--padding-md);
-				box-shadow: var(--shadow-sm);
-				background-color: white;
-			}
-			</style>
-		`)
 	}
 }
 
@@ -458,8 +419,12 @@ class DialPad extends OutgoingCallPopup {
 		}
 
 		this.wrapper.html(
-			`<div class="dialpad-container">
-				${get_keys()}
+			`<i class="dialpad--pointer"></i>
+			<div class="dialpad-container">
+				<input class="dialpad-input form-control" readonly="true">
+				<div class="dialpad-keys">
+					${get_keys()}
+				</div>
 			</div>`
 		)
 	}
