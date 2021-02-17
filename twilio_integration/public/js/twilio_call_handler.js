@@ -146,6 +146,13 @@ function get_status_indicator(status) {
 class TwilioCallPopup {
 	constructor(twilio_device) {
 		this.twilio_device = twilio_device;
+		this.attach_shortcuts();
+	}
+
+	attach_shortcuts() {
+		frappe.ui.keys.on(`shift+ctrl+x`, () => {
+			$('.btn-modal-close').click()
+		});
 	}
 
 	hide_hangup_button() {
