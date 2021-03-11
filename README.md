@@ -64,7 +64,7 @@ Once you have created a site with ERPNext app installed, you can download and in
 
 ```
 bench get-app https://github.com/frappe/twilio-integration.git
-bench --site site_name install-app twilio-integration
+bench --site site_name install-app twilio_integration
 ```
 
 Use `bench start` command to run the project.
