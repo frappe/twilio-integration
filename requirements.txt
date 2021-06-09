@@ -1,3 +1,3 @@
-frappe
-erpnext
+# frappe # https://github.com/frappe/frappe is installed during bench-init
+# erpnext # to be installed using bench
 twilio==6.44.2
