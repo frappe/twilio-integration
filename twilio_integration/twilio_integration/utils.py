@@ -3,7 +3,7 @@ import frappe
 from frappe.utils import get_url
 
 
-def get_public_url(path: str=None, use_ngrok: bool=True):
+def get_public_url(path: str=None, use_ngrok: bool=False):
 	"""Returns a public accessible url of a site using ngrok.
 	"""
 	if frappe.conf.developer_mode and use_ngrok:
