@@ -28,7 +28,7 @@ def generate_access_token():
 
 	token=twilio.generate_voice_access_token(from_number=from_number, identity=frappe.session.user)
 	return {
-		'token': token.decode('utf-8')
+		'token': frappe.safe_decode(token)
 	}
 
 @frappe.whitelist(allow_guest=True)
