@@ -31,14 +31,16 @@ class WhatsAppMessage(Document):
 	
 	def get_message_dict(self):
 		args = {
-			"media_url": ['http://commondatastorage.googleapis.com/codeskulptor-assets/gutenberg.jpg'],
-			"from_": self.from_,
-			"to": self.to,
-			"body": self.message
+			'from_': self.from_,
+			'to': self.to,
+			'body': self.message
 		}
+		if self.media_link:
+			args['media_url'] = [self.media_link]
+
 		return args
 
-def send_bulk_whatsapp_message(sender, receiver_list, message, doctype, docname):
+def send_bulk_whatsapp_message(sender, receiver_list, message, doctype, docname, media=None):
 	if isinstance(receiver_list, string_types):
 		receiver_list = loads(receiver_list)
 		if not isinstance(receiver_list, list):
@@ -47,7 +49,7 @@ def send_bulk_whatsapp_message(sender, receiver_list, message, doctype, docname)
 	for rec in receiver_list:
 		_send_whatsapp(sender, rec, message, doctype, docname)
 
-def _send_whatsapp(from_, to, message, doctype=None, docname=None):
+def _send_whatsapp(from_, to, message, doctype=None, docname=None, media=None):
 	response = frappe._dict()
 
 	wa_msg = frappe.get_doc({
@@ -56,7 +58,8 @@ def _send_whatsapp(from_, to, message, doctype=None, docname=None):
 			'to': 'whatsapp:{}'.format(to),
 			'message': message,
 			'reference_doctype': doctype,
-			'reference_document_name': docname
+			'reference_document_name': docname,
+			'media_link': media
 		}).insert(ignore_permissions=True)
 
 	wa_msg.send()
