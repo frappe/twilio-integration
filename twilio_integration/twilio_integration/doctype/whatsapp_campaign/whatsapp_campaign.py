@@ -16,6 +16,8 @@ class WhatsAppCampaign(Document):
 				frappe.throw(_("Scheduled Time must be a future time."))
 
 			self.status = 'Scheduled'
+
+		self.all_missing_recipients()
 	
 	def validate_attachment(self):
 		attachment = self.get_attachments()
@@ -42,7 +44,7 @@ class WhatsAppCampaign(Document):
 		
 		return contacts
 	
-	def save(self):
+	def all_missing_recipients(self):
 		for recipient in self.recipients:
 			if not recipient.whatsapp_no:
 				recipient.whatsapp_no = frappe.db.get_value(recipient.campaign_for, recipient.recipient, 'whatsapp_no')
@@ -64,11 +66,11 @@ class WhatsAppCampaign(Document):
 	def send_now(self):
 		self.validate_attachment()
 		media = self.get_attachments()
+		self.db_set('status', 'In Progress')
 		if media:
 			media = get_site_url() + media.file_url
 
 		send_bulk_whatsapp_message(
-			sender = '+14155238886',
 			receiver_list = self.get_whatsapp_contact(),
 			message = self.message,
 			doctype = self.doctype,
@@ -76,5 +78,6 @@ class WhatsAppCampaign(Document):
 			media = media
 		)
 
+		self.db_set('status', 'Completed')
 
 

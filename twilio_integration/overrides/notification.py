@@ -31,7 +31,6 @@ class SendNotification(Notification):
 
 	def send_whatsapp_msg(self, doc, context):
 		send_bulk_whatsapp_message(
-			sender=self.twilio_number,
 			receiver_list=self.get_receiver_list(doc, context),
 			message=frappe.render_template(self.message, context),
 			doctype = self.doctype,

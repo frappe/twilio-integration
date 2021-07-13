@@ -16,9 +16,6 @@ class WhatsAppMessage(Document):
 
 		try:
 			response = client.messages.create(**message_dict)
-			print('`````````````````````````````````')
-			print(response.__dict__)
-			print('`````````````````````````````````')
 			self.sent_received = 'Sent'
 			self.status = response.status.title()
 			self.id = response.sid
@@ -33,28 +30,29 @@ class WhatsAppMessage(Document):
 		args = {
 			'from_': self.from_,
 			'to': self.to,
-			'body': self.message
+			'body': self.message,
+			'status_callback': 'https://01d3954808ab.ngrok.io/api/method/twilio_integration.twilio_integration.api.whatsapp_message_status'
 		}
 		if self.media_link:
 			args['media_url'] = [self.media_link]
 
 		return args
 
-def send_bulk_whatsapp_message(sender, receiver_list, message, doctype, docname, media=None):
+def send_bulk_whatsapp_message(receiver_list, message, doctype, docname, media=None):
 	if isinstance(receiver_list, string_types):
 		receiver_list = loads(receiver_list)
 		if not isinstance(receiver_list, list):
 			receiver_list = [receiver_list]
 
 	for rec in receiver_list:
-		_send_whatsapp(sender, rec, message, doctype, docname)
+		_send_whatsapp(rec, message, doctype, docname)
 
-def _send_whatsapp(from_, to, message, doctype=None, docname=None, media=None):
+def _send_whatsapp(to, message, doctype=None, docname=None, media=None):
 	response = frappe._dict()
-
+	sender = frappe.db.get_single_value('Twilio Settings', 'whatsapp_no')
 	wa_msg = frappe.get_doc({
 			'doctype': 'WhatsApp Message',
-			'from_': 'whatsapp:{}'.format(from_),
+			'from_': 'whatsapp:{}'.format(sender),
 			'to': 'whatsapp:{}'.format(to),
 			'message': message,
 			'reference_doctype': doctype,
@@ -64,4 +62,16 @@ def _send_whatsapp(from_, to, message, doctype=None, docname=None, media=None):
 
 	wa_msg.send()
 
-	
+def incoming_message(args):
+	wa_msg = frappe.get_doc({
+			'doctype': 'WhatsApp Message',
+			'from_': args.From,
+			'to': args.To,
+			'message': args.Body,
+			'profile_name': args.ProfileName,
+			'sent_received': args.SmsStatus.title(),
+			'id': args.MessageSid,
+			'send_on': frappe.utils.now(),
+			'status': 'Received'
+		}).insert(ignore_permissions=True)
+

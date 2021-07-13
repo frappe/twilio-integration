@@ -14,7 +14,8 @@
   "status",
   "send_on",
   "reference_doctype",
-  "reference_document_name"
+  "reference_document_name",
+  "profile_name"
  ],
  "fields": [
   {
@@ -76,12 +77,18 @@
    "fieldtype": "Data",
    "label": "Media Link",
    "options": "URL"
+  },
+  {
+   "fieldname": "profile_name",
+   "fieldtype": "Data",
+   "label": "Profile Name"
   }
  ],
+ "in_create": 1,
  "index_web_pages_for_search": 1,
  "links": [],
  "max_attachments": 1,
- "modified": "2021-07-02 14:14:30.104318",
+ "modified": "2021-07-08 01:09:24.002941",
  "modified_by": "Administrator",
  "module": "Twilio Integration",
  "name": "WhatsApp Message",
@@ -96,6 +103,7 @@
    "read": 1,
    "report": 1,
    "role": "System Manager",
+   "select": 1,
    "share": 1,
    "write": 1
   }
