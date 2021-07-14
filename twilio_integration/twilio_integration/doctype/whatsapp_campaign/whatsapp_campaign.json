@@ -26,8 +26,10 @@
   {
    "fieldname": "template_name",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Template Name",
-   "options": "WhatsApp Message Template"
+   "options": "WhatsApp Message Template",
+   "reqd": 1
   },
   {
    "fieldname": "module",
@@ -40,7 +42,9 @@
    "fetch_if_empty": 1,
    "fieldname": "message",
    "fieldtype": "Text",
-   "label": "Message"
+   "in_list_view": 1,
+   "label": "Message",
+   "reqd": 1
   },
   {
    "fieldname": "send_on",
@@ -76,7 +80,8 @@
    "fieldname": "recipients",
    "fieldtype": "Table",
    "label": "Recipients",
-   "options": "WhatsApp Campaign Recipient"
+   "options": "WhatsApp Campaign Recipient",
+   "reqd": 1
   },
   {
    "fieldname": "messge_section",
@@ -106,7 +111,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2021-06-28 12:39:38.925355",
+ "modified": "2021-07-14 11:40:59.599233",
  "modified_by": "Administrator",
  "module": "Twilio Integration",
  "name": "WhatsApp Campaign",
