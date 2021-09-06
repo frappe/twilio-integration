@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "creation": "2021-06-21 13:41:10.080916",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "id",
+  "sent_received",
+  "from_",
+  "to",
+  "message",
+  "media_link",
+  "status",
+  "send_on",
+  "reference_doctype",
+  "reference_document_name",
+  "profile_name"
+ ],
+ "fields": [
+  {
+   "fieldname": "id",
+   "fieldtype": "Data",
+   "label": "ID"
+  },
+  {
+   "fieldname": "to",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "To"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Long Text",
+   "label": "Message"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Status",
+   "options": "\nQueued\nSent\nReceived\nDelivered\nRead\nUndelivered\nError"
+  },
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Link",
+   "label": "Reference DocType",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "reference_document_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Reference Document Name",
+   "options": "reference_doctype"
+  },
+  {
+   "fieldname": "sent_received",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Sent/Received",
+   "options": "Sent\nReceived"
+  },
+  {
+   "fieldname": "from_",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "From"
+  },
+  {
+   "fieldname": "send_on",
+   "fieldtype": "Datetime",
+   "label": "Send On"
+  },
+  {
+   "description": "Must be public.",
+   "fieldname": "media_link",
+   "fieldtype": "Data",
+   "label": "Media Link",
+   "options": "URL"
+  },
+  {
+   "fieldname": "profile_name",
+   "fieldtype": "Data",
+   "label": "Profile Name"
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "max_attachments": 1,
+ "modified": "2021-07-08 01:09:24.002941",
+ "modified_by": "Administrator",
+ "module": "Twilio Integration",
+ "name": "WhatsApp Message",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "select": 1,
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

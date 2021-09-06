@@ -4,6 +4,8 @@ import frappe
 from frappe import _
 from frappe.contacts.doctype.contact.contact import get_contact_with_phone_number
 from .twilio_handler import Twilio, IncomingCall, TwilioCallDetails
+from twilio_integration.twilio_integration.doctype.whatsapp_message.whatsapp_message import incoming_message_callback
+from twilio.twiml.messaging_response import MessagingResponse
 
 @frappe.whitelist()
 def get_twilio_phone_numbers():
@@ -114,3 +116,24 @@ def get_contact_details(phone):
 		'email_id': contact_doc.email_id,
 		'phone_number': contact_doc.phone
 	}
+
+@frappe.whitelist(allow_guest=True)
+def incoming_whatsapp_message_handler(**kwargs):
+	"""This is a webhook called by Twilio when a WhatsApp message is received.
+	"""
+	args = frappe._dict(kwargs)
+	incoming_message_callback(args)
+	resp = MessagingResponse()
+
+	# Add a message
+	resp.message(frappe.db.get_single_value('Twilio Settings', 'reply_message'))
+	return Response(resp.to_xml(), mimetype='text/xml')
+
+@frappe.whitelist(allow_guest=True)
+def whatsapp_message_status_callback(**kwargs):
+	"""This is a webhook called by Twilio whenever sent WhatsApp message status is changed.
+	"""
+	args = frappe._dict(kwargs)
+	if frappe.db.exists({'doctype': 'WhatsApp Message', 'id': args.MessageSid, 'from_': args.From, 'to': args.To}):
+		message = frappe.get_doc('WhatsApp Message', {'id': args.MessageSid, 'from_': args.From, 'to': args.To})
+		message.db_set('status', args.MessageStatus.title())

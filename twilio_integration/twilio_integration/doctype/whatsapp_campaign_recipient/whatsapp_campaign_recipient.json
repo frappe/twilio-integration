@@ -1,0 +1,48 @@
+{
+ "actions": [],
+ "creation": "2021-06-24 16:06:17.418857",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "campaign_for",
+  "recipient",
+  "whatsapp_no"
+ ],
+ "fields": [
+  {
+   "fieldname": "campaign_for",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Campaign For",
+   "reqd": 1
+  },
+  {
+   "fieldname": "recipient",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Recipient",
+   "options": "campaign_for",
+   "reqd": 1
+  },
+  {
+   "fieldname": "whatsapp_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "WhatsApp No.",
+   "options": "Phone"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "istable": 1,
+ "links": [],
+ "modified": "2021-07-06 17:12:37.779388",
+ "modified_by": "Administrator",
+ "module": "Twilio Integration",
+ "name": "WhatsApp Campaign Recipient",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}

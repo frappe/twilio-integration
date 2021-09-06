@@ -1,7 +1,7 @@
 import frappe
 from frappe import _
 from frappe.email.doctype.notification.notification import Notification, get_context, json
-from twilio_integration.twilio_integration.doctype.twilio_settings.twilio_settings import send_whatsapp_message
+from twilio_integration.twilio_integration.doctype.whatsapp_message.whatsapp_message import WhatsAppMessage
 
 class SendNotification(Notification):
 	def validate(self):
@@ -30,8 +30,9 @@ class SendNotification(Notification):
 		super(SendNotification, self).send(doc)
 
 	def send_whatsapp_msg(self, doc, context):
-		send_whatsapp_message(
-			sender=self.twilio_number,
+		WhatsAppMessage.send_whatsapp_message(
 			receiver_list=self.get_receiver_list(doc, context),
 			message=frappe.render_template(self.message, context),
+			doctype = self.doctype,
+			docname = self.name
 		)

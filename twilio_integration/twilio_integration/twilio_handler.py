@@ -7,6 +7,7 @@ from twilio.twiml.voice_response import VoiceResponse, Dial
 
 import frappe
 from frappe import _
+from frappe.utils.password import get_decrypted_password
 from .utils import get_public_url, merge_dicts
 
 class Twilio:
@@ -21,7 +22,7 @@ class Twilio:
 		self.application_sid = settings.twiml_sid
 		self.api_key = settings.api_key
 		self.api_secret = settings.get_password("api_secret")
-		self.twilio_client = TwilioClient(self.account_sid, settings.get_password("auth_token"))
+		self.twilio_client = get_twilio_client()
 
 	@classmethod
 	def connect(self):
@@ -103,6 +104,17 @@ class Twilio:
 		dial.client(client)
 		resp.append(dial)
 		return resp
+
+	@classmethod
+	def get_twilio_client(self):
+		twilio_settings = frappe.get_doc("Twilio Settings")
+		if not twilio_settings.enabled:
+			frappe.throw(_("Please enable twilio settings before sending WhatsApp messages"))
+		
+		auth_token = get_decrypted_password("Twilio Settings", "Twilio Settings", 'auth_token')
+		client = TwilioClient(twilio_settings.account_sid, auth_token)
+
+		return client
 
 class IncomingCall:
 	def __init__(self, from_number, to_number, meta=None):

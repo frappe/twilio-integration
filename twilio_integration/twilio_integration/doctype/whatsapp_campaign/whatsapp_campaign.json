@@ -1,0 +1,136 @@
+{
+ "actions": [],
+ "autoname": "format:WA-CAMP-{YYYY}-{#####}",
+ "creation": "2021-06-24 14:58:40.982664",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "campaign",
+  "scheduled_time",
+  "column_break_2",
+  "status",
+  "module",
+  "section_break_4",
+  "condition",
+  "recipients",
+  "messge_section",
+  "template_name",
+  "message",
+  "more_information_section",
+  "send_on",
+  "column_break_12",
+  "total_participants"
+ ],
+ "fields": [
+  {
+   "fieldname": "template_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Template Name",
+   "options": "WhatsApp Message Template",
+   "reqd": 1
+  },
+  {
+   "fieldname": "module",
+   "fieldtype": "Link",
+   "label": "Module",
+   "options": "Module Def"
+  },
+  {
+   "fetch_from": "template_name.message",
+   "fetch_if_empty": 1,
+   "fieldname": "message",
+   "fieldtype": "Text",
+   "in_list_view": 1,
+   "label": "Message",
+   "reqd": 1
+  },
+  {
+   "fieldname": "send_on",
+   "fieldtype": "Datetime",
+   "label": "Send On"
+  },
+  {
+   "fieldname": "condition",
+   "fieldtype": "Code",
+   "label": "Condition",
+   "options": "JSON"
+  },
+  {
+   "fieldname": "total_participants",
+   "fieldtype": "Int",
+   "label": "Total Participants"
+  },
+  {
+   "fieldname": "campaign",
+   "fieldtype": "Link",
+   "label": "Campaign",
+   "options": "Campaign"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "section_break_4",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "recipients",
+   "fieldtype": "Table",
+   "label": "Recipients",
+   "options": "WhatsApp Campaign Recipient",
+   "reqd": 1
+  },
+  {
+   "fieldname": "messge_section",
+   "fieldtype": "Section Break",
+   "label": "Messge"
+  },
+  {
+   "fieldname": "more_information_section",
+   "fieldtype": "Section Break",
+   "label": "More Information"
+  },
+  {
+   "fieldname": "column_break_12",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "\nScheduled\nIn Progress\nCompleted"
+  },
+  {
+   "fieldname": "scheduled_time",
+   "fieldtype": "Datetime",
+   "label": "Scheduled Time"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2021-07-14 11:40:59.599233",
+ "modified_by": "Administrator",
+ "module": "Twilio Integration",
+ "name": "WhatsApp Campaign",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
