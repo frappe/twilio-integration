@@ -91,13 +91,3 @@ class TwilioSettings(Document):
 						friendly_name=friendly_name
 					)
 		return application
-
-def get_twilio_client():
-	twilio_settings = frappe.get_doc("Twilio Settings")
-	if not twilio_settings.enabled:
-		frappe.throw(_("Please enable twilio settings before sending WhatsApp messages"))
-	
-	auth_token = get_decrypted_password("Twilio Settings", "Twilio Settings", 'auth_token')
-	client = Client(twilio_settings.account_sid, auth_token)
-
-	return client

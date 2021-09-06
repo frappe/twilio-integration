@@ -6,6 +6,16 @@ from frappe.model.document import Document
 from frappe.utils import get_site_url
 from twilio_integration.twilio_integration.doctype.whatsapp_message.whatsapp_message import WhatsAppMessage
 
+supported_file_ext = ['jpg', 
+	'jpeg',
+	'png',
+	'mp3',
+	'ogg',
+	'amr',
+	'pdf',
+	'mp4'
+]
+
 class WhatsAppCampaign(Document):
 	def validate(self):
 		if self.scheduled_time and self.status != 'Completed':
@@ -28,7 +38,7 @@ class WhatsAppCampaign(Document):
 			if attachment.is_private:
 				frappe.throw(_('Attachment must be public.'))
 
-			if attachment.get_extension() not in ['jpg', 'jpeg', 'png', 'mp3', 'ogg', 'amr', 'pdf', 'mp4']:
+			if attachment.get_extension() not in supported_file_ext:
 				frappe.throw(_('Attachment format not supported.'))
 
 	def get_attachment(self):
@@ -39,12 +49,8 @@ class WhatsAppCampaign(Document):
 		return None
 
 	def get_whatsapp_contact(self):
-		contacts = []
+		contacts = [recipient.whatsapp_no for recipient in self.recipients if recipient.whatsapp_no]
 
-		for row in self.recipients:
-			if row.whatsapp_no:
-				contacts.append(row.whatsapp_no)	
-		
 		return contacts
 	
 	def all_missing_recipients(self):
@@ -56,14 +62,15 @@ class WhatsAppCampaign(Document):
 
 	@frappe.whitelist()
 	def get_doctype_list(self):
-		doctypes = list(frappe.db.sql_list("""SELECT dt.parent FROM `tabDocField` 
+		standard_doctype = frappe.db.sql_list("""SELECT dt.parent FROM `tabDocField` 
 			df INNER JOIN `tabDoctype` dt ON dt.name = dt.parent
-			WHERE df.fieldname='whatsapp_no' AND dt.istable = 0 AND dt.issingle = 0 AND dt.is_tree = 0""") + 
-			frappe.db.sql_list("""SELECT dt FROM `tabCustom Field`
+			WHERE df.fieldname='whatsapp_no' AND dt.istable = 0 AND dt.issingle = 0 AND dt.is_tree = 0""")
+		
+		custom_doctype = frappe.db.sql_list("""SELECT dt FROM `tabCustom Field`
 			cf INNER JOIN `tabDoctype` dt ON dt.name = cf.dt
-			WHERE cf.fieldname='whatsapp_no' AND dt.istable = 0 AND dt.issingle = 0 AND dt.is_tree = 0"""))
+			WHERE cf.fieldname='whatsapp_no' AND dt.istable = 0 AND dt.issingle = 0 AND dt.is_tree = 0""")
 
-		return doctypes
+		return standard_doctype + custom_doctype
 
 	@frappe.whitelist()
 	def send_now(self):
