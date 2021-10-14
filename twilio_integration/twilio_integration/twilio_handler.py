@@ -22,7 +22,7 @@ class Twilio:
 		self.application_sid = settings.twiml_sid
 		self.api_key = settings.api_key
 		self.api_secret = settings.get_password("api_secret")
-		self.twilio_client = get_twilio_client()
+		self.twilio_client = self.get_twilio_client()
 
 	@classmethod
 	def connect(self):

@@ -70,6 +70,7 @@ var onload_script = function() {
 					popup.setup_dial_icon();
 					popup.setup_dialpad(conn);
 					document.onkeydown = (e) => {
+						if (popup.dialog.$wrapper.find('.dialpad-section').is(":hidden")) return;
 						let key = e.key;
 						if (conn.status() == 'open' && ["0","1", "2", "3", "4", "5", "6", "7", "8", "9", "*", "#", "w"].includes(key)) {
 							conn.sendDigits(key);
