@@ -41,22 +41,25 @@
    "mandatory_depends_on": "eval: doc.enabled"
   },
   {
+   "description": "API Key will be requested automatically. Read-only.",
    "fieldname": "api_key",
    "fieldtype": "Data",
    "label": "API Key",
-   "permlevel": 1
+   "read_only": 1
   },
   {
+   "description": "TwiML SID will be requested automatically. Read-only.",
    "fieldname": "api_secret",
    "fieldtype": "Password",
    "label": "API Secret",
-   "permlevel": 1
+   "read_only": 1
   },
   {
+   "description": "TwiML SID will be requested automatically. Read-only.",
    "fieldname": "twiml_sid",
    "fieldtype": "Data",
    "label": "TwiML SID",
-   "permlevel": 1
+   "read_only": 1
   },
   {
    "fieldname": "column_break_3",
@@ -73,7 +76,6 @@
    "fieldtype": "Link",
    "label": "Outgoing Voice Medium",
    "options": "Communication Medium",
-   "permlevel": 1
   },
   {
    "fieldname": "section_break_6",
