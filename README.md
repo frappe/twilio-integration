@@ -53,7 +53,7 @@ Users can send notifications through WhatsApp channel. While creating/editing a 
 
 #### Twilio For Voice Calls
 * From your Twilio console you can go to a [programmable voice](https://www.twilio.com/console/voice/dashboard) section and get a Twilio number to use for calls(make sure that the number is voice capable).
-* Create a [TwiML App](https://www.twilio.com/console/voice/twiml/apps/create) by passing voice request url as `you_project_domain_name/api/method/twilio_integration.twilio_integration.doctype.twilio_settings.twilio_settings.voice` . Use `ngrok` to get  public domain for your project in case it is running locally.
+* Create a [TwiML App](https://www.twilio.com/console/voice/twiml/apps/create) by passing voice request url as `you_project_domain_name/api/method/twilio_integration.twilio_integration.api.voice` . Use `ngrok` to get  public domain for your project in case it is running locally.
 
 #### Twilio For Whatsapp
 * From your Twilio console you can go to a [Programmable Messaging](https://www.twilio.com/console/sms/dashboard) section and get a Twilio number to use for whatsapp.
