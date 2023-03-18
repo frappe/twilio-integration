@@ -62,12 +62,12 @@ class WhatsAppCampaign(Document):
 
 	@frappe.whitelist()
 	def get_doctype_list(self):
-		standard_doctype = frappe.db.sql_list("""SELECT dt.parent FROM `tabDocField` 
-			df INNER JOIN `tabDoctype` dt ON dt.name = dt.parent
+		standard_doctype = frappe.db.sql_list("""SELECT df.parent FROM `tabDocField` 
+			df INNER JOIN `tabDocType` dt ON dt.name = df.parent
 			WHERE df.fieldname='whatsapp_no' AND dt.istable = 0 AND dt.issingle = 0 AND dt.is_tree = 0""")
 		
 		custom_doctype = frappe.db.sql_list("""SELECT dt FROM `tabCustom Field`
-			cf INNER JOIN `tabDoctype` dt ON dt.name = cf.dt
+			cf INNER JOIN `tabDocType` dt ON dt.name = cf.dt
 			WHERE cf.fieldname='whatsapp_no' AND dt.istable = 0 AND dt.issingle = 0 AND dt.is_tree = 0""")
 
 		return standard_doctype + custom_doctype
