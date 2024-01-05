@@ -34,10 +34,22 @@ class Twilio:
 		return Twilio(settings=settings)
 
 	def get_phone_numbers(self):
-		"""Get account's twilio phone numbers.
-		"""
-		numbers = self.twilio_client.incoming_phone_numbers.list()
-		return [n.phone_number for n in numbers]
+		"""Get account's Twilio phone numbers and verified caller IDs."""
+		try:
+				# Fetch Twilio incoming phone numbers
+				numbers = self.twilio_client.incoming_phone_numbers.list()
+				twilio_numbers = [n.phone_number for n in numbers]
+
+				# Fetch verified outgoing caller IDs
+				verified_ids = self.twilio_client.outgoing_caller_ids.list()
+				verified_numbers = [v.phone_number for v in verified_ids]
+
+				# Combine both lists
+				combined_numbers = twilio_numbers + verified_numbers
+				return combined_numbers
+		except Exception as e:
+				frappe.log_error(f"Failed to fetch phone numbers: {e}")
+				return []  # Return an empty list or handle as needed
 
 	def generate_voice_access_token(self, from_number: str, identity: str, ttl=60*60):
 		"""Generates a token required to make voice calls from the browser.
